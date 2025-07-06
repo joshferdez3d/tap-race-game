@@ -911,6 +911,8 @@
         let playerTapWindow = 1000; // 1 second window
         let playerTapTimes = [];
         let currentPlayerTapSpeed = 0;
+        let baselineTapSpeed = 0; // Track initial tap speed before 75%
+        let hasReachedAdaptivePhase = false;
         
         // User session data
         let userSession = {
@@ -1390,6 +1392,8 @@
             playerTapCount = 0;
             playerTapTimes = [];
             currentPlayerTapSpeed = 0;
+            baselineTapSpeed = 0;
+            hasReachedAdaptivePhase = false;
             
             document.getElementById('gameInfo').textContent = 'TAP TO DOMINATE!';
             
@@ -1421,31 +1425,45 @@
             // Phase 1: Easy gameplay (0% - 75% progress)
             if (progressPercentage <= 0.75) {
                 // Bot plays at easy difficulty - allows steady progress
-                botCurrentSpeed = botSpeed * 0.6; // Reduced from previous strong start
+                botCurrentSpeed = botSpeed * 0.6;
+                
+                // Track baseline tap speed during easy phase
+                if (currentPlayerTapSpeed > 0) {
+                    baselineTapSpeed = Math.max(baselineTapSpeed, currentPlayerTapSpeed);
+                }
             } 
             // Phase 2: Adaptive resistance (75% - 100% progress)
             else {
+                if (!hasReachedAdaptivePhase) {
+                    hasReachedAdaptivePhase = true;
+                    console.log('🎯 Reached adaptive phase. Baseline tap speed:', baselineTapSpeed);
+                }
+                
                 const currentTapSpeed = calculatePlayerTapSpeed();
                 
-                // Bot matches player's current tap speed
-                // Each player tap pushes back by 4 units, so bot needs to match that
-                const playerPushRate = currentTapSpeed * 4; // 4 units per tap
-                
-                // Bot speed to exactly counter player (with small buffer)
-                const counterSpeed = playerPushRate / 20; // Divide by update frequency (50ms = 20 updates/sec)
-                
-                // Add slight resistance so player needs to tap faster to progress
-                botCurrentSpeed = counterSpeed + (botSpeed * 0.3); // Extra 30% resistance
-                
-                // Cap the bot speed to prevent impossible scenarios
-                botCurrentSpeed = Math.min(botCurrentSpeed, botSpeed * 3);
-                botCurrentSpeed = Math.max(botCurrentSpeed, botSpeed * 0.5);
-                
-                // Update game info to guide player
-                if (currentTapSpeed < 8) {
-                    document.getElementById('gameInfo').textContent = 'TAP FASTER! USE TWO FINGERS!';
+                // If player is tapping faster than their baseline, stop adapting
+                if (currentTapSpeed > baselineTapSpeed && baselineTapSpeed > 0) {
+                    // Player has increased their speed - let them win!
+                    botCurrentSpeed = botSpeed * 0.4; // Reduce resistance significantly
+                    document.getElementById('gameInfo').textContent = 'EXCELLENT! KEEP GOING!';
                 } else {
-                    document.getElementById('gameInfo').textContent = 'KEEP GOING! DOUBLE TAP!';
+                    // Bot matches player's current tap speed
+                    const playerPushRate = currentTapSpeed * 4; // 4 units per tap
+                    const counterSpeed = playerPushRate / 20; // Divide by update frequency
+                    
+                    // Add resistance so player needs to tap faster to progress
+                    botCurrentSpeed = counterSpeed + (botSpeed * 0.3);
+                    
+                    // Cap the bot speed
+                    botCurrentSpeed = Math.min(botCurrentSpeed, botSpeed * 3);
+                    botCurrentSpeed = Math.max(botCurrentSpeed, botSpeed * 0.5);
+                    
+                    // Update game info to guide player
+                    if (currentTapSpeed < 8) {
+                        document.getElementById('gameInfo').textContent = 'TAP FASTER! USE TWO FINGERS!';
+                    } else {
+                        document.getElementById('gameInfo').textContent = 'KEEP GOING! DOUBLE TAP!';
+                    }
                 }
             }
         }
@@ -1520,16 +1538,7 @@
             // Update player tap speed
             calculatePlayerTapSpeed();
             
-            // Visual feedback for tap speed in final phase
-            const progressPercentage = Math.abs(battlePosition) / 100;
-            if (progressPercentage > 0.75) {
-                // Add visual intensity effect
-                const gameArea = document.getElementById('gameArea');
-                gameArea.style.filter = `brightness(${1 + (currentPlayerTapSpeed * 0.05)})`;
-                setTimeout(() => {
-                    if (gameArea) gameArea.style.filter = 'brightness(1)';
-                }, 100);
-            }
+            // Removed the screen flashing effect that was causing issues
             
             if (battlePosition <= -100) {
                 if (gameMode === 'bot') {
@@ -1737,6 +1746,8 @@
             playerTapCount = 0;
             playerTapTimes = [];
             currentPlayerTapSpeed = 0;
+            baselineTapSpeed = 0;
+            hasReachedAdaptivePhase = false;
             
             if (botInterval) {
                 clearInterval(botInterval);
@@ -1746,9 +1757,7 @@
             document.getElementById('countdown').style.display = 'none';
             document.getElementById('gameInfo').textContent = 'Get Ready to Battle!';
             
-            // Reset any visual effects
-            const gameArea = document.getElementById('gameArea');
-            if (gameArea) gameArea.style.filter = 'brightness(1)';
+            // Reset any visual effects (removed filter reset since we removed the effect)
             
             showZoneImages();
         }
