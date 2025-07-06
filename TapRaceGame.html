@@ -950,39 +950,30 @@
             }
         });
 
-        // Send OTP function (placeholder for client's API)
+        // Send OTP function - Console version for testing
         async function sendOTP(name, phone, otp) {
-            // PLACEHOLDER: Replace this with your client's API endpoint
-            console.log('📤 Sending OTP via client API...');
+            console.log('🚀 TESTING MODE - OTP Generation');
+            console.log('📱 Phone:', phone);
+            console.log('👤 Name:', name);
+            console.log('🔐 YOUR OTP CODE:', otp);
+            console.log('⚠️ IMPORTANT: Use this OTP code to verify!');
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             
-            try {
-                // Example API call structure - replace with actual endpoint
-                const response = await fetch('/api/send-otp', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name: name,
-                        phone: phone,
-                        otp: otp
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                console.log('✅ OTP sent successfully:', result);
-                return result;
-                
-            } catch (error) {
-                console.error('❌ API call failed:', error);
-                // For development/testing purposes, we'll simulate success
-                console.log('🔧 Development mode: Simulating OTP send success');
-                return { success: true, message: 'OTP sent successfully (simulated)' };
+            // Show OTP in a browser alert for easier testing
+            if (window.confirm(`🔐 Testing Mode\n\nYour OTP is: ${otp}\n\nClick OK to continue, or Cancel to see it in console.`)) {
+                console.log('✅ OTP displayed to user via alert');
             }
+            
+            // Simulate API success
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve({ 
+                        success: true, 
+                        message: 'OTP generated successfully (Testing Mode)',
+                        otp: otp // Include OTP in response for testing
+                    });
+                }, 500); // Small delay to simulate API call
+            });
         }
 
         // Handle OTP form submission
@@ -1007,24 +998,14 @@
             verifyBtn.textContent = 'Verifying...';
             
             try {
-                // Verify OTP using the server endpoint
-                const response = await fetch('/api/verify-otp', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        otp: enteredOTP
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
+                console.log('🔍 Verifying OTP:', enteredOTP, 'against generated:', userSession.generatedOTP);
+                
+                // Simple client-side verification for testing
+                if (enteredOTP === userSession.generatedOTP) {
+                    console.log('✅ OTP verification successful!');
+                    
                     // OTP is correct
                     userSession.isAuthenticated = true;
-                    userSession.name = result.user.name;
-                    userSession.phone = result.user.phone;
                     
                     // Check if user has won before by calling client API
                     await checkUserWinHistory();
@@ -1036,7 +1017,8 @@
                     showScreen('introPanel1');
                     
                 } else {
-                    showOTPError(result.error || 'Invalid OTP. Please try again.');
+                    console.log('❌ OTP verification failed');
+                    showOTPError('Invalid OTP. Please try again.');
                 }
                 
             } catch (error) {
@@ -1153,13 +1135,20 @@
             }
         }
 
-        // Resend OTP function
+        // Resend OTP function - Console version
         async function resendOTP() {
             try {
                 // Generate new OTP
                 const newOTP = Math.floor(1000 + Math.random() * 9000).toString();
                 userSession.generatedOTP = newOTP;
-                console.log('🔐 New OTP generated:', newOTP); // For testing
+                
+                console.log('🔄 Resending OTP...');
+                console.log('🔐 NEW OTP CODE:', newOTP);
+                console.log('⚠️ IMPORTANT: Use this NEW OTP code to verify!');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                
+                // Show new OTP in browser alert
+                alert(`🔄 New OTP Generated\n\nYour new OTP is: ${newOTP}\n\nCheck browser console for details.`);
                 
                 // Clear OTP inputs
                 document.querySelectorAll('.otp-input').forEach(input => {
@@ -1167,11 +1156,7 @@
                 });
                 document.getElementById('otp1').focus();
                 
-                // Send new OTP
-                await sendOTP(userSession.name, userSession.phone, newOTP);
-                
-                // Show success message (you can customize this)
-                console.log('📱 New OTP sent successfully');
+                console.log('📱 New OTP generated successfully');
                 
             } catch (error) {
                 console.error('❌ Failed to resend OTP:', error);
