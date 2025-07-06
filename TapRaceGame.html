@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Tap Race Push-Back Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Arial', sans-serif;
+            background: #000;
+            color: white;
+            touch-action: manipulation;
+            overscroll-behavior: none;
+        }
+
+        .screen {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: #000;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Login Screens Styles */
+        .login-container {
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border: 2px solid #cf0000;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 
+                0 0 30px rgba(207, 0, 0, 0.5),
+                0 20px 40px rgba(0,0,0,0.6);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        /* Login Form Styles */
+        .login-screen h1 {
+            color: #cf0000;
+            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 15px rgba(207, 0, 0, 0.6);
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { text-shadow: 0 0 15px rgba(207, 0, 0, 0.6); }
+            to { text-shadow: 0 0 25px rgba(207, 0, 0, 0.9), 0 0 35px rgba(207, 0, 0, 0.4); }
+        }
+
+        .register-subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #666;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            color: white;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #cf0000;
+            box-shadow: 0 0 10px rgba(207, 0, 0, 0.3);
+        }
+
+        .form-group input::placeholder {
+            color: #888;
+        }
+
+        .login-btn {
+            background: linear-gradient(145deg, #cf0000, #a00000);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            box-shadow: 0 0 15px rgba(207, 0, 0, 0.4);
+            touch-action: manipulation;
+        }
+
+        .login-btn:hover, .login-btn:active {
+            background: linear-gradient(145deg, #ff0000, #cf0000);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(207, 0, 0, 0.6);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            background: linear-gradient(145deg, #666, #444);
+            box-shadow: none;
+        }
+
+        .mandatory-text {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 1rem;
+            font-style: italic;
+        }
+
+        /* OTP Screen Styles */
+        .otp-screen h1 {
+            color: #cf0000;
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 15px rgba(207, 0, 0, 0.6);
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+
+        .otp-subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            font-weight: bold;
+        }
+
+        .otp-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .otp-input {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #666;
+            border-radius: 8px;
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .otp-input:focus {
+            outline: none;
+            border-color: #cf0000;
+            box-shadow: 0 0 10px rgba(207, 0, 0, 0.3);
+        }
+
+        .otp-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .resend-btn {
+            background: none;
+            border: none;
+            color: #cf0000;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            touch-action: manipulation;
+            transition: all 0.3s;
+        }
+
+        .resend-btn:hover, .resend-btn:active {
+            color: #ff0000;
+            text-shadow: 0 0 10px rgba(207, 0, 0, 0.6);
+        }
+
+        .verify-btn {
+            background: linear-gradient(145deg, #cf0000, #a00000);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px rgba(207, 0, 0, 0.4);
+            touch-action: manipulation;
+        }
+
+        .verify-btn:hover, .verify-btn:active {
+            background: linear-gradient(145deg, #ff0000, #cf0000);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(207, 0, 0, 0.6);
+        }
+
+        .verify-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            background: linear-gradient(145deg, #666, #444);
+            box-shadow: none;
+        }
+
+        .error {
+            color: #ff6666;
+            margin-bottom: 1rem;
+            font-style: italic;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 102, 102, 0.5);
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Game Intro and Main Menu Styles (keeping original) */
+        .intro-screen {
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .intro-image {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .main-menu {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .menu-text {
+            position: absolute;
+            top: 20%;
+            left: 5%;
+            width: 90%;
+            height: 90%;
+            background-size: contain;
+            background-position: center top;
+            background-repeat: no-repeat;
+            pointer-events: none;
+        }
+
+        .menu-button {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.3s ease, filter 0.3s ease;
+            touch-action: manipulation;
+            will-change: auto;
+            backface-visibility: hidden;
+            transform: translateX(-50%) translateZ(0);
+            left: 50% !important;
+        }
+
+        .menu-button:active {
+            transform: translateX(-50%) translateZ(0) scale(0.95);
+            filter: brightness(1.2);
+        }
+
+        .menu-button img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .iconic-bot-button {
+            bottom: 40% !important;
+            width: 60% !important;
+            max-width: 300px !important;
+        }
+
+        .friend-button {
+            bottom: 25% !important;
+            width: 60% !important;
+            max-width: 300px !important;
+        }
+
+        /* Game Area Styles (keeping original) */
+        .game-area {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            position: relative;
+            display: none;
+            background: linear-gradient(180deg, #231f20 0%, #000 50%, #cf0000 100%);
+            overflow: hidden;
+        }
+
+        .player-zone {
+            width: 100%;
+            height: 50vh;
+            height: 50dvh;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .top-zone {
+            border-bottom: 3px solid #666;
+            background: linear-gradient(180deg, #231f20 0%, rgba(35,31,32,0.7) 100%);
+        }
+
+        .bottom-zone {
+            border-top: 3px solid #666;
+            background: linear-gradient(0deg, #cf0000 0%, rgba(207,0,0,0.7) 100%);
+        }
+
+        .zone-image {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.3));
+            transition: all 0.2s ease;
+            pointer-events: none;
+        }
+
+        .zone-image.hidden {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .battle-zone {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .player-fill {
+            position: absolute;
+            width: 100%;
+            transition: height 0.1s ease-out;
+            opacity: 0.8;
+            bottom: 0;
+            background: linear-gradient(to top, 
+                #cf0000 0%, 
+                rgba(207, 0, 0, 0.9) 30%,
+                rgba(207, 0, 0, 0.7) 70%, 
+                rgba(207, 0, 0, 0.5) 100%);
+            box-shadow: 0 0 20px rgba(207, 0, 0, 0.6);
+            height: 50%;
+        }
+
+        .opponent-fill {
+            position: absolute;
+            width: 100%;
+            transition: height 0.1s ease-out;
+            opacity: 0.8;
+            top: 0;
+            background: linear-gradient(to bottom, 
+                #231f20 0%, 
+                rgba(35, 31, 32, 0.9) 30%,
+                rgba(35, 31, 32, 0.7) 70%, 
+                rgba(35, 31, 32, 0.5) 100%);
+            box-shadow: 0 0 20px rgba(35, 31, 32, 0.6);
+            height: 50%;
+        }
+
+        .center-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #cf0000, #fff, #231f20);
+            z-index: 10;
+            box-shadow: 
+                0 0 15px rgba(255, 255, 255, 0.8),
+                0 0 30px rgba(255, 255, 255, 0.4);
+            animation: pulseLine 2s ease-in-out infinite;
+            top: calc(50% - 3px);
+        }
+
+        @keyframes pulseLine {
+            0%, 100% { 
+                box-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.4); 
+            }
+            50% { 
+                box-shadow: 0 0 25px rgba(255, 255, 255, 1), 0 0 50px rgba(255, 255, 255, 0.6); 
+            }
+        }
+
+        .countdown {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(4rem, 15vw, 6rem);
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 
+                0 0 20px rgba(255, 255, 255, 0.8),
+                0 0 40px rgba(255, 255, 255, 0.4),
+                2px 2px 8px rgba(0,0,0,0.8);
+            z-index: 20;
+            animation: countdownPulse 1s ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes countdownPulse {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .game-info {
+            position: absolute;
+            top: max(env(safe-area-inset-top), 20px);
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 15;
+            text-shadow: 
+                0 0 10px rgba(255, 255, 255, 0.6),
+                2px 2px 4px rgba(0,0,0,0.8);
+            text-align: center;
+            padding: 0 20px;
+            pointer-events: none;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 30;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border: 2px solid #cf0000;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 
+                0 0 30px rgba(207, 0, 0, 0.5),
+                0 20px 40px rgba(0,0,0,0.6);
+            animation: modalPop 0.4s ease-out;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .modal h2 {
+            font-size: clamp(1.3rem, 5vw, 2.2rem);
+            font-weight: 900;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 15px rgba(207, 0, 0, 0.6);
+            line-height: 1.2;
+        }
+
+        .win {
+            color: #cf0000;
+            animation: winGlow 1s ease-in-out infinite alternate;
+        }
+
+        .lose {
+            color: #666;
+        }
+
+        @keyframes winGlow {
+            from { text-shadow: 0 0 15px rgba(207, 0, 0, 0.6); }
+            to { text-shadow: 0 0 25px rgba(207, 0, 0, 0.9), 0 0 35px rgba(207, 0, 0, 0.4); }
+        }
+
+        .restart-btn, .menu-btn {
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            color: white;
+            border: 2px solid #cf0000;
+            padding: 1rem 2rem;
+            font-size: clamp(1rem, 4vw, 1.1rem);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(207, 0, 0, 0.3);
+            touch-action: manipulation;
+            min-height: 50px;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .restart-btn:active, .menu-btn:active {
+            background: linear-gradient(145deg, #cf0000, #a00000);
+            transform: scale(0.98);
+        }
+
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.7) rotate(-5deg); }
+            to { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+
+        /* Special Win Screen Styles */
+        .special-win-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 40;
+            padding: 20px;
+        }
+
+        .special-win-content {
+            background: #000;
+            border: 3px solid #cf0000;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 
+                0 0 40px rgba(207, 0, 0, 0.7),
+                0 30px 60px rgba(0,0,0,0.8);
+            animation: specialWinPop 0.6s ease-out;
+            width: 100%;
+            max-width: 450px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .special-win-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 17px 17px 0 0;
+        }
+
+        .coupon-section {
+            padding: 1.5rem;
+            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+            border-top: 2px solid #cf0000;
+        }
+
+        .coupon-label {
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .coupon-code {
+            background: linear-gradient(145deg, #cf0000, #a00000);
+            color: #fff;
+            padding: 1rem 1.5rem;
+            font-size: 1.3rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            box-shadow: 
+                0 0 20px rgba(207, 0, 0, 0.5),
+                inset 0 2px 4px rgba(255, 255, 255, 0.2);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: couponGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes couponGlow {
+            from { 
+                box-shadow: 0 0 20px rgba(207, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+            }
+            to { 
+                box-shadow: 0 0 30px rgba(207, 0, 0, 0.8), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        .coupon-loading {
+            color: #888;
+            font-style: italic;
+            font-size: 1rem;
+        }
+
+        .special-win-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .special-win-buttons .restart-btn,
+        .special-win-buttons .menu-btn {
+            margin: 0;
+            width: 100%;
+            max-width: none;
+        }
+
+        @keyframes specialWinPop {
+            from { 
+                opacity: 0; 
+                transform: scale(0.6) rotateY(15deg);
+            }
+            to { 
+                opacity: 1; 
+                transform: scale(1) rotateY(0deg);
+            }
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+            .iconic-bot-button, .friend-button {
+                width: 70%;
+            }
+            
+            .zone-image {
+                width: 80px;
+                height: 80px;
+            }
+
+            .otp-container { 
+                gap: 10px; 
+            }
+
+            .otp-input { 
+                width: 45px; 
+                height: 45px; 
+                font-size: 1.2rem; 
+            }
+
+            .coupon-code {
+                font-size: 1.1rem;
+                letter-spacing: 2px;
+                padding: 0.8rem 1rem;
+            }
+
+            .special-win-content {
+                max-width: 95%;
+            }
+        }
+
+        /* Landscape mobile optimization */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .game-info {
+                top: 10px;
+                font-size: clamp(0.9rem, 3vw, 1.2rem);
+            }
+            
+            .zone-image {
+                width: 60px;
+                height: 60px;
+            }
+
+            .special-win-content {
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="screen active" id="loginScreen">
+        <div class="login-container">
+            <div class="login-screen">
+                <h1>Login</h1>
+                <p class="register-subtitle">Enter your details to start playing</p>
+                <div id="loginError" class="error" style="display: none;"></div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="name">👤 Username</label>
+                        <input type="text" name="name" id="name" placeholder="Enter your username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">📱 Phone Number</label>
+                        <input type="tel" name="phone" id="phone" placeholder="Enter your phone number" required>
+                    </div>
+                    <button type="submit" class="login-btn" id="loginBtn">Send OTP</button>
+                    <div class="mandatory-text">*All fields are mandatory</div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- OTP Verification Screen -->
+    <div class="screen" id="otpScreen">
+        <div class="login-container">
+            <div class="otp-screen">
+                <h1>Enter OTP</h1>
+                <p class="otp-subtitle">
+                    We've sent your 4-digit code to<br>
+                    <strong id="maskedPhone"></strong>
+                </p>
+                <div id="otpError" class="error" style="display: none;"></div>
+                <form id="otpForm">
+                    <div class="otp-container">
+                        <input name="otp1" id="otp1" class="otp-input" maxlength="1" required>
+                        <input name="otp2" id="otp2" class="otp-input" maxlength="1" required>
+                        <input name="otp3" id="otp3" class="otp-input" maxlength="1" required>
+                        <input name="otp4" id="otp4" class="otp-input" maxlength="1" required>
+                    </div>
+                    <div class="otp-actions">
+                        <button type="button" class="resend-btn" onclick="resendOTP()">RESEND OTP</button>
+                        <button type="submit" class="verify-btn" id="verifyBtn">Verify</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Intro Panel 1 -->
+    <div class="screen intro-screen" id="introPanel1" onclick="nextIntroPanel()">
+        <img src="assets/images/IntroPanel1.jpg" alt="Intro Panel 1" class="intro-image">
+    </div>
+
+    <!-- Intro Panel 2 -->
+    <div class="screen intro-screen" id="introPanel2" onclick="showMainMenu()">
+        <img src="assets/images/IntroPanel2.jpg" alt="Intro Panel 2" class="intro-image">
+    </div>
+
+    <!-- Main Menu -->
+    <div class="screen" id="mainMenu">
+        <div class="main-menu" style="background-image: url('assets/images/MainMenu-GameBG.jpg');">
+            <div class="menu-text" style="background-image: url('assets/images/MainMenuText.png');"></div>
+            
+            <div class="menu-button iconic-bot-button" onclick="selectMode('bot')">
+                <img src="assets/images/iconic-bot-button.png" alt="Iconic Bot">
+            </div>
+            
+            <div class="menu-button friend-button" onclick="selectMode('friend')">
+                <img src="assets/images/friend-button.png" alt="Friend">
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Area -->
+    <div class="game-area" id="gameArea">
+        <div class="game-info" id="gameInfo">Get Ready to Battle!</div>
+        
+        <div class="player-zone top-zone" id="topZone">
+            <img src="assets/images/bot1.png" alt="Bot" class="zone-image" id="topZoneImage">
+        </div>
+        
+        <div class="player-zone bottom-zone" id="bottomZone">
+            <img src="assets/images/you1.png" alt="You" class="zone-image" id="bottomZoneImage">
+        </div>
+        
+        <div class="battle-zone">
+            <div class="player-fill" id="playerFill"></div>
+            <div class="opponent-fill" id="opponentFill"></div>
+            <div class="center-line"></div>
+        </div>
+        
+        <div class="countdown" id="countdown"></div>
+    </div>
+
+    <!-- Game Result Modal -->
+    <div class="modal" id="gameModal">
+        <div class="modal-content">
+            <h2 id="resultText"></h2>
+            <button class="restart-btn" onclick="restartGame()">Restart Game</button>
+            <button class="menu-btn" onclick="backToMenu()">Back to Menu</button>
+        </div>
+    </div>
+
+    <!-- Special First Win Screen -->
+    <div class="special-win-screen" id="specialWinScreen">
+        <div class="special-win-content">
+            <img src="assets/images/limited-offer.jpg" alt="Limited Offer" class="special-win-image">
+            <div class="coupon-section">
+                <div class="coupon-label">Your Exclusive Coupon Code:</div>
+                <div class="coupon-code" id="couponCode">
+                    <span class="coupon-loading">Loading...</span>
+                </div>
+                <div class="special-win-buttons">
+                    <button class="restart-btn" onclick="restartFromSpecialWin()">Play Again</button>
+                    <button class="menu-btn" onclick="backToMenuFromSpecialWin()">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentScreen = 'loginScreen';
+        let gameMode = '';
+        let gameActive = false;
+        let gameStarted = false;
+        let battlePosition = 0;
+        let botInterval;
+        let botSpeed = 2.0;
+        let botCurrentSpeed = 2.0;
+        let gameStartTime = 0;
+        
+        // User session data
+        let userSession = {
+            name: '',
+            phone: '',
+            generatedOTP: '',
+            isAuthenticated: false,
+            hasWonBefore: false  // Track if user has won before
+        };
+
+        // ============================
+        // LOGIN & OTP FUNCTIONALITY
+        // ============================
+
+        // Mask phone number for display
+        function maskPhone(phone) {
+            return phone.replace(/(\d{3})\d{4}(\d{3})/, '$1****$2');
+        }
+
+        // Handle login form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            
+            if (!name || !phone) {
+                showLoginError('Both name and phone are required.');
+                return;
+            }
+
+            // Store user data
+            userSession.name = name;
+            userSession.phone = phone;
+            
+            // Generate OTP
+            const otp = Math.floor(1000 + Math.random() * 9000).toString();
+            userSession.generatedOTP = otp;
+            console.log('🔐 Generated OTP:', otp); // For testing
+            
+            // Show loading state
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Sending OTP...';
+            
+            try {
+                // Send OTP via SMS
+                await sendOTP(name, phone, otp);
+                
+                // Show OTP screen
+                document.getElementById('maskedPhone').textContent = maskPhone(phone);
+                showScreen('otpScreen');
+                
+                // Focus first OTP input
+                setTimeout(() => {
+                    document.getElementById('otp1').focus();
+                }, 100);
+                
+            } catch (error) {
+                console.error('❌ Failed to send OTP:', error);
+                showLoginError('Failed to send OTP. Please try again.');
+            } finally {
+                // Reset button
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Send OTP';
+            }
+        });
+
+        // Send OTP function (placeholder for client's API)
+        async function sendOTP(name, phone, otp) {
+            // PLACEHOLDER: Replace this with your client's API endpoint
+            console.log('📤 Sending OTP via client API...');
+            
+            try {
+                // Example API call structure - replace with actual endpoint
+                const response = await fetch('/api/send-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        phone: phone,
+                        otp: otp
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ OTP sent successfully:', result);
+                return result;
+                
+            } catch (error) {
+                console.error('❌ API call failed:', error);
+                // For development/testing purposes, we'll simulate success
+                console.log('🔧 Development mode: Simulating OTP send success');
+                return { success: true, message: 'OTP sent successfully (simulated)' };
+            }
+        }
+
+        // Handle OTP form submission
+        document.getElementById('otpForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const otp1 = document.getElementById('otp1').value;
+            const otp2 = document.getElementById('otp2').value;
+            const otp3 = document.getElementById('otp3').value;
+            const otp4 = document.getElementById('otp4').value;
+            
+            const enteredOTP = otp1 + otp2 + otp3 + otp4;
+            
+            if (enteredOTP.length !== 4) {
+                showOTPError('Please enter all 4 digits.');
+                return;
+            }
+            
+            // Show loading state
+            const verifyBtn = document.getElementById('verifyBtn');
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = 'Verifying...';
+            
+            try {
+                // Verify OTP using the server endpoint
+                const response = await fetch('/api/verify-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        otp: enteredOTP
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // OTP is correct
+                    userSession.isAuthenticated = true;
+                    userSession.name = result.user.name;
+                    userSession.phone = result.user.phone;
+                    
+                    // Check if user has won before by calling client API
+                    await checkUserWinHistory();
+                    
+                    // Save user data to client's database
+                    await saveUserData(userSession.name, userSession.phone);
+                    
+                    // Show game intro
+                    showScreen('introPanel1');
+                    
+                } else {
+                    showOTPError(result.error || 'Invalid OTP. Please try again.');
+                }
+                
+            } catch (error) {
+                console.error('❌ OTP verification failed:', error);
+                showOTPError('Verification failed. Please try again.');
+            } finally {
+                // Reset button
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = 'Verify';
+            }
+        });
+
+        // Check if user has won before (placeholder for client's API)
+        async function checkUserWinHistory() {
+            // PLACEHOLDER: Replace this with your client's API endpoint
+            console.log('🔍 Checking user win history via client API...');
+            
+            try {
+                // Example API call structure - replace with actual endpoint
+                const response = await fetch('/api/check-user-wins', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phone: userSession.phone
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                userSession.hasWonBefore = result.hasWon || false;
+                console.log('✅ User win history checked:', userSession.hasWonBefore);
+                return result;
+                
+            } catch (error) {
+                console.error('❌ Check win history API call failed:', error);
+                // For development/testing purposes, assume first time player
+                console.log('🔧 Development mode: Assuming first-time player');
+                userSession.hasWonBefore = false;
+                return { hasWon: false };
+            }
+        }
+
+        // Save user data function (placeholder for client's API)
+        async function saveUserData(name, phone) {
+            // PLACEHOLDER: Replace this with your client's API endpoint
+            console.log('💾 Saving user data via client API...');
+            
+            try {
+                // Example API call structure - replace with actual endpoint
+                const response = await fetch('/api/save-user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        phone: phone,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ User data saved successfully:', result);
+                return result;
+                
+            } catch (error) {
+                console.error('❌ Save user API call failed:', error);
+                // For development/testing purposes, we'll simulate success
+                console.log('🔧 Development mode: Simulating user save success');
+                return { success: true, message: 'User data saved successfully (simulated)' };
+            }
+        }
+
+        // Get coupon code from client's API
+        async function getCouponCode() {
+            // PLACEHOLDER: Replace this with your client's API endpoint
+            console.log('🎟️ Getting coupon code via client API...');
+            
+            try {
+                // Example API call structure - replace with actual endpoint
+                const response = await fetch('/api/get-coupon', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phone: userSession.phone,
+                        name: userSession.name
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ Coupon code retrieved:', result);
+                return result.couponCode || 'WELCOME25';
+                
+            } catch (error) {
+                console.error('❌ Get coupon API call failed:', error);
+                // For development/testing purposes, return a sample code
+                console.log('🔧 Development mode: Using sample coupon code');
+                return 'WELCOME25';
+            }
+        }
+
+        // Resend OTP function
+        async function resendOTP() {
+            try {
+                // Generate new OTP
+                const newOTP = Math.floor(1000 + Math.random() * 9000).toString();
+                userSession.generatedOTP = newOTP;
+                console.log('🔐 New OTP generated:', newOTP); // For testing
+                
+                // Clear OTP inputs
+                document.querySelectorAll('.otp-input').forEach(input => {
+                    input.value = '';
+                });
+                document.getElementById('otp1').focus();
+                
+                // Send new OTP
+                await sendOTP(userSession.name, userSession.phone, newOTP);
+                
+                // Show success message (you can customize this)
+                console.log('📱 New OTP sent successfully');
+                
+            } catch (error) {
+                console.error('❌ Failed to resend OTP:', error);
+                showOTPError('Failed to resend OTP. Please try again.');
+            }
+        }
+
+        // Show login error
+        function showLoginError(message) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Show OTP error
+        function showOTPError(message) {
+            const errorDiv = document.getElementById('otpError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // OTP input auto-navigation
+        function setupOTPInputs() {
+            const inputs = Array.from(document.querySelectorAll('.otp-input'));
+            inputs.forEach((inp, i) => {
+                inp.addEventListener('input', e => {
+                    if (e.target.value && i < inputs.length - 1) {
+                        inputs[i + 1].focus();
+                    }
+                });
+                inp.addEventListener('keydown', e => {
+                    if (e.key === 'Backspace' && !e.target.value && i > 0) {
+                        inputs[i - 1].focus();
+                    }
+                });
+            });
+        }
+
+        // Initialize OTP inputs
+        setupOTPInputs();
+
+        // ============================
+        // SPECIAL WIN SCREEN FUNCTIONALITY
+        // ============================
+
+        // Show special first-time win screen
+        async function showSpecialWinScreen() {
+            const specialWinScreen = document.getElementById('specialWinScreen');
+            const couponCodeElement = document.getElementById('couponCode');
+            
+            // Show the screen first
+            specialWinScreen.style.display = 'flex';
+            
+            // Start loading coupon code
+            couponCodeElement.innerHTML = '<span class="coupon-loading">Loading...</span>';
+            
+            try {
+                // Get coupon code from API
+                const couponCode = await getCouponCode();
+                
+                // Display the coupon code
+                couponCodeElement.innerHTML = couponCode;
+                
+            } catch (error) {
+                console.error('❌ Failed to get coupon code:', error);
+                couponCodeElement.innerHTML = 'WELCOME25';
+            }
+        }
+
+        // Restart game from special win screen
+        function restartFromSpecialWin() {
+            document.getElementById('specialWinScreen').style.display = 'none';
+            resetGame();
+            startCountdown();
+        }
+
+        // Back to menu from special win screen
+        function backToMenuFromSpecialWin() {
+            document.getElementById('specialWinScreen').style.display = 'none';
+            backToMenu();
+        }
+
+        // ============================
+        // GAME FUNCTIONALITY (Original)
+        // ============================
+
+        // Preload images for better performance
+        function preloadImages() {
+            const imagePaths = [
+                'assets/images/IntroPanel1.jpg',
+                'assets/images/IntroPanel2.jpg',
+                'assets/images/MainMenu-GameBG.jpg',
+                'assets/images/MainMenuText.png',
+                'assets/images/iconic-bot-button.png',
+                'assets/images/friend-button.png',
+                'assets/images/bot1.png',
+                'assets/images/you1.png',
+                'assets/images/limited-offer.jpg'  // Preload the special win image
+            ];
+            
+            imagePaths.forEach(path => {
+                const img = new Image();
+                img.src = path;
+            });
+        }
+
+        // Call preload on page load
+        window.addEventListener('load', preloadImages);
+
+        // Screen navigation functions
+        function showScreen(screenId) {
+            document.getElementById(currentScreen).classList.remove('active');
+            document.getElementById(screenId).classList.add('active');
+            currentScreen = screenId;
+        }
+
+        function nextIntroPanel() {
+            showScreen('introPanel2');
+        }
+
+        function showMainMenu() {
+            showScreen('mainMenu');
+        }
+
+        function selectMode(mode) {
+            gameMode = mode;
+            
+            // Update zone images based on game mode
+            const topZoneImage = document.getElementById('topZoneImage');
+            if (mode === 'bot') {
+                topZoneImage.src = 'assets/images/bot1.png';
+                topZoneImage.alt = 'Bot';
+                document.getElementById('gameInfo').textContent = 'Push Back the Bot!';
+            } else {
+                topZoneImage.src = 'assets/images/you1.png';
+                topZoneImage.alt = 'Player 2';
+                document.getElementById('gameInfo').textContent = 'Player vs Player Battle!';
+            }
+            
+            // Show game area and start countdown
+            document.getElementById('mainMenu').classList.remove('active');
+            document.getElementById('gameArea').style.display = 'block';
+            
+            setTimeout(() => {
+                startCountdown();
+            }, 500);
+        }
+
+        function startCountdown() {
+            const countdown = document.getElementById('countdown');
+            let count = 3;
+            
+            countdown.textContent = count;
+            countdown.style.display = 'block';
+            
+            const countInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdown.textContent = count;
+                    countdown.style.animation = 'countdownPulse 1s ease-in-out';
+                } else if (count === 0) {
+                    countdown.textContent = 'TAP!';
+                    countdown.style.animation = 'countdownPulse 1s ease-in-out';
+                } else {
+                    countdown.style.display = 'none';
+                    startGame();
+                    clearInterval(countInterval);
+                }
+                
+                setTimeout(() => {
+                    countdown.style.animation = '';
+                }, 1000);
+            }, 1000);
+        }
+
+        function startGame() {
+            gameActive = true;
+            gameStarted = true;
+            battlePosition = 0;
+            gameStartTime = Date.now();
+            botCurrentSpeed = botSpeed;
+            
+            document.getElementById('gameInfo').textContent = 'TAP TO DOMINATE!';
+            
+            updateBattleVisuals();
+            
+            if (gameMode === 'bot') {
+                startBot();
+            }
+            
+            setupEventListeners();
+        }
+
+        function calculateBotSpeed() {
+            const elapsedTime = (Date.now() - gameStartTime) / 1000;
+            
+            if (elapsedTime <= 1.5) {
+                botCurrentSpeed = botSpeed * 2;
+            } else if (elapsedTime <= 6.5) {
+                const progress = (elapsedTime - 1.5) / 5;
+                const speedMultiplier = 2 - (1 * progress);
+                botCurrentSpeed = botSpeed * speedMultiplier;
+            } else {
+                botCurrentSpeed = botSpeed;
+            }
+        }
+
+        function startBot() {
+            botInterval = setInterval(() => {
+                if (!gameActive) return;
+                
+                calculateBotSpeed();
+                battlePosition += botCurrentSpeed;
+                
+                if (Math.abs(battlePosition) > 5) {
+                    hideZoneImages();
+                }
+                
+                updateBattleVisuals();
+                
+                if (battlePosition >= 100) {
+                    endGame('lose');
+                }
+            }, 50);
+        }
+
+        function setupEventListeners() {
+            const topZone = document.getElementById('topZone');
+            const bottomZone = document.getElementById('bottomZone');
+            
+            const events = ['click', 'touchstart', 'mousedown', 'pointerdown'];
+            
+            const newTopZone = topZone.cloneNode(true);
+            const newBottomZone = bottomZone.cloneNode(true);
+            
+            topZone.parentNode.replaceChild(newTopZone, topZone);
+            bottomZone.parentNode.replaceChild(newBottomZone, bottomZone);
+            
+            events.forEach(eventType => {
+                document.getElementById('topZone').addEventListener(eventType, handleTopTouch, { passive: false });
+                document.getElementById('bottomZone').addEventListener(eventType, handleBottomTouch, { passive: false });
+            });
+        }
+
+        function handleTopTouch(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (!gameActive || gameMode === 'bot') return;
+            
+            hideZoneImages();
+            battlePosition += 4;
+            updateBattleVisuals();
+            
+            if (battlePosition >= 100) {
+                endGame('player2win');
+            }
+        }
+
+        function handleBottomTouch(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (!gameActive) return;
+            
+            hideZoneImages();
+            battlePosition -= 4;
+            updateBattleVisuals();
+            
+            if (battlePosition <= -100) {
+                if (gameMode === 'bot') {
+                    endGame('win');
+                } else {
+                    endGame('player1win');
+                }
+            }
+        }
+
+        function updateBattleVisuals() {
+            const playerFill = document.getElementById('playerFill');
+            const opponentFill = document.getElementById('opponentFill');
+            
+            const playerFillPercent = Math.max(0, 50 - (battlePosition / 2));
+            const opponentFillPercent = Math.max(0, 50 + (battlePosition / 2));
+            
+            playerFill.style.height = `${playerFillPercent}%`;
+            opponentFill.style.height = `${opponentFillPercent}%`;
+        }
+
+        function hideZoneImages() {
+            const topZoneImage = document.getElementById('topZoneImage');
+            const bottomZoneImage = document.getElementById('bottomZoneImage');
+            
+            if (topZoneImage && !topZoneImage.classList.contains('hidden')) {
+                topZoneImage.classList.add('hidden');
+            }
+            if (bottomZoneImage && !bottomZoneImage.classList.contains('hidden')) {
+                bottomZoneImage.classList.add('hidden');
+            }
+        }
+
+        function showZoneImages() {
+            const topZoneImage = document.getElementById('topZoneImage');
+            const bottomZoneImage = document.getElementById('bottomZoneImage');
+            
+            if (topZoneImage) {
+                topZoneImage.classList.remove('hidden');
+            }
+            if (bottomZoneImage) {
+                bottomZoneImage.classList.remove('hidden');
+            }
+        }
+
+        function endGame(result) {
+            gameActive = false;
+            if (botInterval) {
+                clearInterval(botInterval);
+            }
+            
+            // Check if this is a win and first time winning
+            const isWin = (result === 'win' || result === 'player1win' || result === 'player2win');
+            const isFirstTimeWin = isWin && !userSession.hasWonBefore;
+            
+            // Save game result to client's database
+            saveGameResult(result, isFirstTimeWin);
+            
+            // Show special screen for first-time winners, regular modal for others
+            if (isFirstTimeWin) {
+                // Mark that user has now won
+                userSession.hasWonBefore = true;
+                // Show special win screen
+                showSpecialWinScreen();
+            } else {
+                // Show regular game result modal
+                showRegularGameResult(result);
+            }
+        }
+
+        // Show regular game result modal
+        function showRegularGameResult(result) {
+            const modal = document.getElementById('gameModal');
+            const resultText = document.getElementById('resultText');
+            
+            switch(result) {
+                case 'win':
+                    resultText.textContent = 'You Dominated!';
+                    resultText.className = 'win';
+                    break;
+                case 'lose':
+                    resultText.textContent = 'Bot Overwhelmed You!';
+                    resultText.className = 'lose';
+                    break;
+                case 'player1win':
+                    resultText.textContent = 'Player 1 Dominates!';
+                    resultText.className = 'win';
+                    break;
+                case 'player2win':
+                    resultText.textContent = 'Player 2 Dominates!';
+                    resultText.className = 'win';
+                    break;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        // Save game result function (updated to include first-time win flag)
+        async function saveGameResult(result, isFirstTimeWin = false) {
+            if (!userSession.isAuthenticated) return;
+            
+            // PLACEHOLDER: Replace this with your client's API endpoint
+            console.log('💾 Saving game result via client API...');
+            
+            try {
+                const response = await fetch('/api/save-game-result', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phone: userSession.phone,
+                        name: userSession.name,
+                        gameMode: gameMode,
+                        result: result,
+                        isFirstTimeWin: isFirstTimeWin,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const apiResult = await response.json();
+                console.log('✅ Game result saved successfully:', apiResult);
+                return apiResult;
+                
+            } catch (error) {
+                console.error('❌ Save game result API call failed:', error);
+                console.log('🔧 Development mode: Simulating game result save success');
+                return { success: true, message: 'Game result saved successfully (simulated)' };
+            }
+        }
+
+        function restartGame() {
+            document.getElementById('gameModal').style.display = 'none';
+            resetGame();
+            startCountdown();
+        }
+
+        function backToMenu() {
+            document.getElementById('gameModal').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'none';
+            
+            if (botInterval) {
+                clearInterval(botInterval);
+                botInterval = null;
+            }
+            
+            gameActive = false;
+            gameStarted = false;
+            battlePosition = 0;
+            gameStartTime = 0;
+            botCurrentSpeed = botSpeed;
+            
+            document.getElementById(currentScreen).classList.remove('active');
+            document.getElementById('mainMenu').classList.add('active');
+            currentScreen = 'mainMenu';
+            
+            setTimeout(() => {
+                resetGameAreaSafe();
+            }, 300);
+        }
+        
+        function resetGameAreaSafe() {
+            if (currentScreen !== 'mainMenu') {
+                return;
+            }
+            
+            const gameArea = document.getElementById('gameArea');
+            if (gameArea && gameArea.style.display === 'none') {
+                const gameInfo = document.getElementById('gameInfo');
+                const playerFill = document.getElementById('playerFill');
+                const opponentFill = document.getElementById('opponentFill');
+                const countdown = document.getElementById('countdown');
+                const topZoneImage = document.getElementById('topZoneImage');
+                const bottomZoneImage = document.getElementById('bottomZoneImage');
+                
+                if (gameInfo) gameInfo.textContent = 'Get Ready to Battle!';
+                if (playerFill) playerFill.style.height = '50%';
+                if (opponentFill) opponentFill.style.height = '50%';
+                if (countdown) countdown.style.display = 'none';
+                if (topZoneImage) {
+                    topZoneImage.classList.remove('hidden');
+                    topZoneImage.src = 'assets/images/bot1.png';
+                    topZoneImage.alt = 'Bot';
+                }
+                if (bottomZoneImage) {
+                    bottomZoneImage.classList.remove('hidden');
+                    bottomZoneImage.src = 'assets/images/you1.png';
+                    bottomZoneImage.alt = 'You';
+                }
+            }
+        }
+
+        function resetGame() {
+            gameActive = false;
+            gameStarted = false;
+            battlePosition = 0;
+            gameStartTime = 0;
+            botCurrentSpeed = botSpeed;
+            
+            if (botInterval) {
+                clearInterval(botInterval);
+            }
+            
+            updateBattleVisuals();
+            document.getElementById('countdown').style.display = 'none';
+            showZoneImages();
+        }
+
+        // Prevent zoom and handle mobile quirks
+        document.addEventListener('gesturestart', e => e.preventDefault());
+        document.addEventListener('gesturechange', e => e.preventDefault());
+        document.addEventListener('gestureend', e => e.preventDefault());
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        window.addEventListener('orientationchange', function() {
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+            }, 100);
+        });
+
+        window.addEventListener('load', function() {
+            window.scrollTo(0, 0);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: tap-race-game
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: SMS_USERNAME
+        value: Lekh09
+      - key: SMS_APIKEY
+        value: 409DC-16CCF
+      - key: SMS_SENDER
+        value: MORORE
+      - key: SMS_ROUTE
+        value: OTP
+      - key: SMS_TEMPLATEID
+        value: 1707174419181876651
