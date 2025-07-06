@@ -503,6 +503,23 @@
             text-align: center;
             padding: 0 20px;
             pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .game-info.intense {
+            animation: intensePulse 0.5s ease-in-out infinite alternate;
+            color: #cf0000;
+        }
+
+        @keyframes intensePulse {
+            from { 
+                text-shadow: 0 0 10px rgba(207, 0, 0, 0.6), 2px 2px 4px rgba(0,0,0,0.8);
+                transform: translateX(-50%) scale(1);
+            }
+            to { 
+                text-shadow: 0 0 20px rgba(207, 0, 0, 1), 2px 2px 8px rgba(0,0,0,0.9);
+                transform: translateX(-50%) scale(1.05);
+            }
         }
 
         .modal {
@@ -814,14 +831,19 @@
         <div class="main-menu" style="background-image: url('assets/images/MainMenu-GameBG.jpg');">
             <div class="menu-text" style="background-image: url('assets/images/MainMenuText.png');"></div>
             
-            <div class="menu-button iconic-bot-button" onclick="selectMode('bot')">
+            <div class="menu-button iconic-bot-button" onclick="showTutorial('bot')">
                 <img src="assets/images/iconic-bot-button.png" alt="Iconic Bot">
             </div>
             
-            <div class="menu-button friend-button" onclick="selectMode('friend')">
+            <div class="menu-button friend-button" onclick="showTutorial('friend')">
                 <img src="assets/images/friend-button.png" alt="Friend">
             </div>
         </div>
+    </div>
+
+    <!-- Tutorial Panel -->
+    <div class="screen intro-screen" id="tutorialPanel" onclick="startSelectedMode()">
+        <img src="assets/images/TutorialPanel.jpg" alt="Tutorial Panel" class="intro-image">
     </div>
 
     <!-- Game Area -->
@@ -875,6 +897,7 @@
         // Global variables
         let currentScreen = 'loginScreen';
         let gameMode = '';
+        let selectedGameMode = ''; // Store selected mode for tutorial
         let gameActive = false;
         let gameStarted = false;
         let battlePosition = 0;
@@ -882,6 +905,12 @@
         let botSpeed = 2.0;
         let botCurrentSpeed = 2.0;
         let gameStartTime = 0;
+        
+        // Player tapping mechanics
+        let playerTapCount = 0;
+        let playerTapWindow = 1000; // 1 second window
+        let playerTapTimes = [];
+        let currentPlayerTapSpeed = 0;
         
         // User session data
         let userSession = {
@@ -1258,6 +1287,7 @@
                 'assets/images/MainMenuText.png',
                 'assets/images/iconic-bot-button.png',
                 'assets/images/friend-button.png',
+                'assets/images/TutorialPanel.jpg',  // Add tutorial panel
                 'assets/images/bot1.png',
                 'assets/images/you1.png',
                 'assets/images/limited-offer.jpg'  // Preload the special win image
@@ -1287,6 +1317,17 @@
             showScreen('mainMenu');
         }
 
+        // Show tutorial screen before game mode selection
+        function showTutorial(mode) {
+            selectedGameMode = mode;
+            showScreen('tutorialPanel');
+        }
+
+        // Start the selected game mode after tutorial
+        function startSelectedMode() {
+            selectMode(selectedGameMode);
+        }
+
         function selectMode(mode) {
             gameMode = mode;
             
@@ -1303,7 +1344,7 @@
             }
             
             // Show game area and start countdown
-            document.getElementById('mainMenu').classList.remove('active');
+            document.getElementById(currentScreen).classList.remove('active');
             document.getElementById('gameArea').style.display = 'block';
             
             setTimeout(() => {
@@ -1345,6 +1386,11 @@
             gameStartTime = Date.now();
             botCurrentSpeed = botSpeed;
             
+            // Reset player tapping metrics
+            playerTapCount = 0;
+            playerTapTimes = [];
+            currentPlayerTapSpeed = 0;
+            
             document.getElementById('gameInfo').textContent = 'TAP TO DOMINATE!';
             
             updateBattleVisuals();
@@ -1356,17 +1402,51 @@
             setupEventListeners();
         }
 
-        function calculateBotSpeed() {
-            const elapsedTime = (Date.now() - gameStartTime) / 1000;
+        function calculatePlayerTapSpeed() {
+            const now = Date.now();
             
-            if (elapsedTime <= 1.5) {
-                botCurrentSpeed = botSpeed * 2;
-            } else if (elapsedTime <= 6.5) {
-                const progress = (elapsedTime - 1.5) / 5;
-                const speedMultiplier = 2 - (1 * progress);
-                botCurrentSpeed = botSpeed * speedMultiplier;
-            } else {
-                botCurrentSpeed = botSpeed;
+            // Remove taps older than the window
+            playerTapTimes = playerTapTimes.filter(time => (now - time) <= playerTapWindow);
+            
+            // Calculate taps per second
+            currentPlayerTapSpeed = playerTapTimes.length;
+            
+            return currentPlayerTapSpeed;
+        }
+
+        function calculateBotSpeed() {
+            const playerProgress = Math.abs(battlePosition);
+            const progressPercentage = playerProgress / 100;
+            
+            // Phase 1: Easy gameplay (0% - 75% progress)
+            if (progressPercentage <= 0.75) {
+                // Bot plays at easy difficulty - allows steady progress
+                botCurrentSpeed = botSpeed * 0.6; // Reduced from previous strong start
+            } 
+            // Phase 2: Adaptive resistance (75% - 100% progress)
+            else {
+                const currentTapSpeed = calculatePlayerTapSpeed();
+                
+                // Bot matches player's current tap speed
+                // Each player tap pushes back by 4 units, so bot needs to match that
+                const playerPushRate = currentTapSpeed * 4; // 4 units per tap
+                
+                // Bot speed to exactly counter player (with small buffer)
+                const counterSpeed = playerPushRate / 20; // Divide by update frequency (50ms = 20 updates/sec)
+                
+                // Add slight resistance so player needs to tap faster to progress
+                botCurrentSpeed = counterSpeed + (botSpeed * 0.3); // Extra 30% resistance
+                
+                // Cap the bot speed to prevent impossible scenarios
+                botCurrentSpeed = Math.min(botCurrentSpeed, botSpeed * 3);
+                botCurrentSpeed = Math.max(botCurrentSpeed, botSpeed * 0.5);
+                
+                // Update game info to guide player
+                if (currentTapSpeed < 8) {
+                    document.getElementById('gameInfo').textContent = 'TAP FASTER! USE TWO FINGERS!';
+                } else {
+                    document.getElementById('gameInfo').textContent = 'KEEP GOING! DOUBLE TAP!';
+                }
             }
         }
 
@@ -1428,9 +1508,28 @@
             
             if (!gameActive) return;
             
+            // Record tap time for speed calculation
+            const now = Date.now();
+            playerTapTimes.push(now);
+            playerTapCount++;
+            
             hideZoneImages();
             battlePosition -= 4;
             updateBattleVisuals();
+            
+            // Update player tap speed
+            calculatePlayerTapSpeed();
+            
+            // Visual feedback for tap speed in final phase
+            const progressPercentage = Math.abs(battlePosition) / 100;
+            if (progressPercentage > 0.75) {
+                // Add visual intensity effect
+                const gameArea = document.getElementById('gameArea');
+                gameArea.style.filter = `brightness(${1 + (currentPlayerTapSpeed * 0.05)})`;
+                setTimeout(() => {
+                    if (gameArea) gameArea.style.filter = 'brightness(1)';
+                }, 100);
+            }
             
             if (battlePosition <= -100) {
                 if (gameMode === 'bot') {
@@ -1634,12 +1733,23 @@
             gameStartTime = 0;
             botCurrentSpeed = botSpeed;
             
+            // Reset player metrics
+            playerTapCount = 0;
+            playerTapTimes = [];
+            currentPlayerTapSpeed = 0;
+            
             if (botInterval) {
                 clearInterval(botInterval);
             }
             
             updateBattleVisuals();
             document.getElementById('countdown').style.display = 'none';
+            document.getElementById('gameInfo').textContent = 'Get Ready to Battle!';
+            
+            // Reset any visual effects
+            const gameArea = document.getElementById('gameArea');
+            if (gameArea) gameArea.style.filter = 'brightness(1)';
+            
             showZoneImages();
         }
 
