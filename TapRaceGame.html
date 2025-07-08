@@ -281,7 +281,7 @@
             pointer-events: none;
         }
 
-        /* Game Intro and Main Menu Styles (keeping original) */
+        /* Game styles remain the same as original */
         .intro-screen {
             cursor: pointer;
             touch-action: manipulation;
@@ -351,7 +351,7 @@
             max-width: 300px !important;
         }
 
-        /* Game Area Styles (keeping original) */
+        /* Game Area Styles (keeping original game styles) */
         .game-area {
             width: 100vw;
             height: 100vh;
@@ -796,21 +796,23 @@
             <div class="otp-screen">
                 <h1>Enter OTP</h1>
                 <p class="otp-subtitle">
-                    We've sent your 4-digit code to<br>
-                    <strong id="maskedPhone"></strong>
+                  We've sent your 6-digit code to<br>
+                  <strong id="maskedPhone"></strong>
                 </p>
                 <div id="otpError" class="error" style="display: none;"></div>
                 <form id="otpForm">
-                    <div class="otp-container">
-                        <input name="otp1" id="otp1" class="otp-input" maxlength="1" required>
-                        <input name="otp2" id="otp2" class="otp-input" maxlength="1" required>
-                        <input name="otp3" id="otp3" class="otp-input" maxlength="1" required>
-                        <input name="otp4" id="otp4" class="otp-input" maxlength="1" required>
-                    </div>
-                    <div class="otp-actions">
-                        <button type="button" class="resend-btn" onclick="resendOTP()">RESEND OTP</button>
-                        <button type="submit" class="verify-btn" id="verifyBtn">Verify</button>
-                    </div>
+                  <div class="otp-container">
+                    <input name="otp1" id="otp1" class="otp-input" maxlength="1" required>
+                    <input name="otp2" id="otp2" class="otp-input" maxlength="1" required>
+                    <input name="otp3" id="otp3" class="otp-input" maxlength="1" required>
+                    <input name="otp4" id="otp4" class="otp-input" maxlength="1" required>
+                    <input name="otp5" id="otp5" class="otp-input" maxlength="1" required>
+                    <input name="otp6" id="otp6" class="otp-input" maxlength="1" required>
+                  </div>
+                  <div class="otp-actions">
+                    <button type="button" class="resend-btn" onclick="resendOTP()">RESEND OTP</button>
+                    <button type="submit" class="verify-btn" id="verifyBtn">Verify</button>
+                  </div>
                 </form>
             </div>
         </div>
@@ -894,10 +896,27 @@
     </div>
 
     <script>
+        // ============================
+        // API CONFIGURATION
+        // ============================
+        
+        // API Configuration
+        const API_CONFIG = {
+            baseURL: 'http://34.93.184.145/api',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        };
+        // Store authentication token and customer data
+        let authToken = '';
+        let customerId = '';
+        let outletQR = 'QRKAPIL8989'; // You can make this configurable
+
         // Global variables
         let currentScreen = 'loginScreen';
         let gameMode = '';
-        let selectedGameMode = ''; // Store selected mode for tutorial
+        let selectedGameMode = '';
         let gameActive = false;
         let gameStarted = false;
         let battlePosition = 0;
@@ -908,10 +927,10 @@
         
         // Player tapping mechanics
         let playerTapCount = 0;
-        let playerTapWindow = 1000; // 1 second window
+        let playerTapWindow = 1000;
         let playerTapTimes = [];
         let currentPlayerTapSpeed = 0;
-        let baselineTapSpeed = 0; // Track initial tap speed before 75%
+        let baselineTapSpeed = 0;
         let hasReachedAdaptivePhase = false;
         
         // User session data
@@ -920,8 +939,131 @@
             phone: '',
             generatedOTP: '',
             isAuthenticated: false,
-            hasWonBefore: false  // Track if user has won before
+            hasWonBefore: false,
+            couponCode: ''
         };
+
+        // ============================
+        // API FUNCTIONS
+        // ============================
+
+        // Generate OTP - Step 1 of signup
+        async function sendOTP(name, phone) {
+            console.log('🚀 Sending OTP via client API');
+            console.log('📱 Phone:', phone);
+            console.log('👤 Name:', name);
+            
+            try {
+                const response = await fetch(`${API_CONFIG.baseURL}/customer/signup`, {
+                    method: 'POST',
+                    headers: API_CONFIG.headers,
+                    body: JSON.stringify({
+                        mobile_no: phone
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || `HTTP error! status: ${response.status}`);
+                }
+
+                console.log('✅ OTP sent successfully:', result);
+                return result;
+                
+            } catch (error) {
+                console.error('❌ Send OTP API call failed:', error);
+                throw error;
+            }
+        }
+
+        // Verify OTP - Step 2 of signup
+        async function verifyOTPWithAPI(phone, enteredOTP) {
+            console.log('🔍 Verifying OTP with client API');
+            
+            try {
+                const response = await fetch(`${API_CONFIG.baseURL}/customer/verify`, {
+                    method: 'POST',
+                    headers: API_CONFIG.headers,
+                    body: JSON.stringify({
+                        mobile_no: phone,
+                        otp: enteredOTP
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || 'OTP verification failed');
+                }
+
+                console.log('✅ OTP verified successfully:', result);
+                
+                // Store authentication token and customer ID
+                if (result.token) {
+                    authToken = result.token;
+                    console.log('🔑 Auth token received');
+                }
+                
+                if (result.customer_id) {
+                    customerId = result.customer_id;
+                    console.log('👤 Customer ID:', customerId);
+                }
+                
+                return result;
+                
+            } catch (error) {
+                console.error('❌ OTP verification API call failed:', error);
+                throw error;
+            }
+        }
+
+        // Save game result
+        async function saveGameResultWithAPI(gameResult) {
+            if (!authToken || !customerId) {
+                console.warn('⚠️ No auth token or customer ID available');
+                return { success: false, message: 'Authentication required' };
+            }
+            
+            console.log('💾 Saving game result via client API...');
+            
+            try {
+                const response = await fetch(`${API_CONFIG.baseURL}/customer/game`, {
+                    method: 'POST',
+                    headers: {
+                        ...API_CONFIG.headers,
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        customer_id: customerId,
+                        outlet_qr: outletQR,
+                        game_result: gameResult
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || `HTTP error! status: ${response.status}`);
+                }
+
+                console.log('✅ Game result saved successfully:', result);
+                
+                // Check if this was a win and if user gets a coupon
+                if (result.coupon_code && gameResult === 'win') {
+                    userSession.hasWonBefore = false; // Show special win screen
+                    userSession.couponCode = result.coupon_code;
+                } else {
+                    userSession.hasWonBefore = true; // Regular game result
+                }
+                
+                return result;
+                
+            } catch (error) {
+                console.error('❌ Save game result API call failed:', error);
+                return { success: false, message: error.message };
+            }
+        }
 
         // ============================
         // LOGIN & OTP FUNCTIONALITY
@@ -948,19 +1090,14 @@
             userSession.name = name;
             userSession.phone = phone;
             
-            // Generate OTP
-            const otp = Math.floor(1000 + Math.random() * 9000).toString();
-            userSession.generatedOTP = otp;
-            console.log('🔐 Generated OTP:', otp); // For testing
-            
             // Show loading state
             const loginBtn = document.getElementById('loginBtn');
             loginBtn.disabled = true;
             loginBtn.textContent = 'Sending OTP...';
             
             try {
-                // Send OTP via SMS
-                await sendOTP(name, phone, otp);
+                // Send OTP via client API
+                await sendOTP(name, phone);
                 
                 // Show OTP screen
                 document.getElementById('maskedPhone').textContent = maskPhone(phone);
@@ -973,39 +1110,13 @@
                 
             } catch (error) {
                 console.error('❌ Failed to send OTP:', error);
-                showLoginError('Failed to send OTP. Please try again.');
+                showLoginError(error.message || 'Failed to send OTP. Please try again.');
             } finally {
                 // Reset button
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Send OTP';
             }
         });
-
-        // Send OTP function - Console version for testing
-        async function sendOTP(name, phone, otp) {
-            console.log('🚀 TESTING MODE - OTP Generation');
-            console.log('📱 Phone:', phone);
-            console.log('👤 Name:', name);
-            console.log('🔐 YOUR OTP CODE:', otp);
-            console.log('⚠️ IMPORTANT: Use this OTP code to verify!');
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            
-            // Show OTP in a browser alert for easier testing
-            if (window.confirm(`🔐 Testing Mode\n\nYour OTP is: ${otp}\n\nClick OK to continue, or Cancel to see it in console.`)) {
-                console.log('✅ OTP displayed to user via alert');
-            }
-            
-            // Simulate API success
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    resolve({ 
-                        success: true, 
-                        message: 'OTP generated successfully (Testing Mode)',
-                        otp: otp // Include OTP in response for testing
-                    });
-                }, 500); // Small delay to simulate API call
-            });
-        }
 
         // Handle OTP form submission
         document.getElementById('otpForm').addEventListener('submit', async (e) => {
@@ -1015,11 +1126,14 @@
             const otp2 = document.getElementById('otp2').value;
             const otp3 = document.getElementById('otp3').value;
             const otp4 = document.getElementById('otp4').value;
+            const otp5 = document.getElementById('otp5').value;
+            const otp6 = document.getElementById('otp6').value;
+
             
-            const enteredOTP = otp1 + otp2 + otp3 + otp4;
+            const enteredOTP = otp1 + otp2 + otp3 + otp4 + otp5 + otp6;
             
-            if (enteredOTP.length !== 4) {
-                showOTPError('Please enter all 4 digits.');
+            if (enteredOTP.length !== 6) {
+                showOTPError('Please enter all 6 digits.');
                 return;
             }
             
@@ -1029,32 +1143,25 @@
             verifyBtn.textContent = 'Verifying...';
             
             try {
-                console.log('🔍 Verifying OTP:', enteredOTP, 'against generated:', userSession.generatedOTP);
+                console.log('🔍 Verifying OTP:', enteredOTP);
                 
-                // Simple client-side verification for testing
-                if (enteredOTP === userSession.generatedOTP) {
-                    console.log('✅ OTP verification successful!');
-                    
-                    // OTP is correct
-                    userSession.isAuthenticated = true;
-                    
-                    // Check if user has won before by calling client API
-                    await checkUserWinHistory();
-                    
-                    // Save user data to client's database
-                    await saveUserData(userSession.name, userSession.phone);
-                    
-                    // Show game intro
-                    showScreen('introPanel1');
-                    
-                } else {
-                    console.log('❌ OTP verification failed');
-                    showOTPError('Invalid OTP. Please try again.');
-                }
+                // Verify OTP with client API
+                const result = await verifyOTPWithAPI(userSession.phone, enteredOTP);
+                
+                console.log('✅ OTP verification successful!');
+                
+                // Mark as authenticated
+                userSession.isAuthenticated = true;
+                
+                // Assume first time player for now - will be determined by game result API
+                userSession.hasWonBefore = false;
+                
+                // Show game intro
+                showScreen('introPanel1');
                 
             } catch (error) {
                 console.error('❌ OTP verification failed:', error);
-                showOTPError('Verification failed. Please try again.');
+                showOTPError(error.message || 'Invalid OTP. Please try again.');
             } finally {
                 // Reset button
                 verifyBtn.disabled = false;
@@ -1062,124 +1169,18 @@
             }
         });
 
-        // Check if user has won before (placeholder for client's API)
-        async function checkUserWinHistory() {
-            // PLACEHOLDER: Replace this with your client's API endpoint
-            console.log('🔍 Checking user win history via client API...');
-            
-            try {
-                // Example API call structure - replace with actual endpoint
-                const response = await fetch('/api/check-user-wins', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        phone: userSession.phone
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                userSession.hasWonBefore = result.hasWon || false;
-                console.log('✅ User win history checked:', userSession.hasWonBefore);
-                return result;
-                
-            } catch (error) {
-                console.error('❌ Check win history API call failed:', error);
-                // For development/testing purposes, assume first time player
-                console.log('🔧 Development mode: Assuming first-time player');
-                userSession.hasWonBefore = false;
-                return { hasWon: false };
-            }
-        }
-
-        // Save user data function (placeholder for client's API)
-        async function saveUserData(name, phone) {
-            // PLACEHOLDER: Replace this with your client's API endpoint
-            console.log('💾 Saving user data via client API...');
-            
-            try {
-                // Example API call structure - replace with actual endpoint
-                const response = await fetch('/api/save-user', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name: name,
-                        phone: phone,
-                        timestamp: new Date().toISOString()
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                console.log('✅ User data saved successfully:', result);
-                return result;
-                
-            } catch (error) {
-                console.error('❌ Save user API call failed:', error);
-                // For development/testing purposes, we'll simulate success
-                console.log('🔧 Development mode: Simulating user save success');
-                return { success: true, message: 'User data saved successfully (simulated)' };
-            }
-        }
-
-        // Get coupon code from client's API
-        async function getCouponCode() {
-            // PLACEHOLDER: Replace this with your client's API endpoint
-            console.log('🎟️ Getting coupon code via client API...');
-            
-            try {
-                // Example API call structure - replace with actual endpoint
-                const response = await fetch('/api/get-coupon', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        phone: userSession.phone,
-                        name: userSession.name
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                console.log('✅ Coupon code retrieved:', result);
-                return result.couponCode || 'WELCOME25';
-                
-            } catch (error) {
-                console.error('❌ Get coupon API call failed:', error);
-                // For development/testing purposes, return a sample code
-                console.log('🔧 Development mode: Using sample coupon code');
-                return 'WELCOME25';
-            }
-        }
-
-        // Resend OTP function - Console version
+        // Resend OTP function
         async function resendOTP() {
+            if (!userSession.phone) {
+                showOTPError('Phone number not found. Please refresh and try again.');
+                return;
+            }
+            
             try {
-                // Generate new OTP
-                const newOTP = Math.floor(1000 + Math.random() * 9000).toString();
-                userSession.generatedOTP = newOTP;
-                
                 console.log('🔄 Resending OTP...');
-                console.log('🔐 NEW OTP CODE:', newOTP);
-                console.log('⚠️ IMPORTANT: Use this NEW OTP code to verify!');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 
-                // Show new OTP in browser alert
-                alert(`🔄 New OTP Generated\n\nYour new OTP is: ${newOTP}\n\nCheck browser console for details.`);
+                // Call the signup API again to resend OTP
+                await sendOTP(userSession.name, userSession.phone);
                 
                 // Clear OTP inputs
                 document.querySelectorAll('.otp-input').forEach(input => {
@@ -1187,11 +1188,21 @@
                 });
                 document.getElementById('otp1').focus();
                 
-                console.log('📱 New OTP generated successfully');
+                console.log('📱 OTP resent successfully');
+                
+                // Show success message briefly
+                const errorDiv = document.getElementById('otpError');
+                errorDiv.textContent = 'OTP resent successfully!';
+                errorDiv.style.color = '#00ff00';
+                errorDiv.style.display = 'block';
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                    errorDiv.style.color = '#ff6666';
+                }, 3000);
                 
             } catch (error) {
                 console.error('❌ Failed to resend OTP:', error);
-                showOTPError('Failed to resend OTP. Please try again.');
+                showOTPError(error.message || 'Failed to resend OTP. Please try again.');
             }
         }
 
@@ -1217,19 +1228,19 @@
 
         // OTP input auto-navigation
         function setupOTPInputs() {
-            const inputs = Array.from(document.querySelectorAll('.otp-input'));
-            inputs.forEach((inp, i) => {
-                inp.addEventListener('input', e => {
-                    if (e.target.value && i < inputs.length - 1) {
-                        inputs[i + 1].focus();
-                    }
-                });
-                inp.addEventListener('keydown', e => {
-                    if (e.key === 'Backspace' && !e.target.value && i > 0) {
-                        inputs[i - 1].focus();
-                    }
-                });
+          const inputs = Array.from(document.querySelectorAll('.otp-input'));
+          inputs.forEach((inp, i) => {
+            inp.addEventListener('input', e => {
+              if (e.target.value && i < inputs.length - 1) {
+                inputs[i + 1].focus();
+              }
             });
+            inp.addEventListener('keydown', e => {
+              if (e.key === 'Backspace' && !e.target.value && i > 0) {
+                inputs[i - 1].focus();
+              }
+            });
+          });
         }
 
         // Initialize OTP inputs
@@ -1247,18 +1258,11 @@
             // Show the screen first
             specialWinScreen.style.display = 'flex';
             
-            // Start loading coupon code
-            couponCodeElement.innerHTML = '<span class="coupon-loading">Loading...</span>';
-            
-            try {
-                // Get coupon code from API
-                const couponCode = await getCouponCode();
-                
-                // Display the coupon code
-                couponCodeElement.innerHTML = couponCode;
-                
-            } catch (error) {
-                console.error('❌ Failed to get coupon code:', error);
+            // Check if we already have a coupon from the API response
+            if (userSession.couponCode) {
+                couponCodeElement.innerHTML = userSession.couponCode;
+            } else {
+                // Fallback
                 couponCodeElement.innerHTML = 'WELCOME25';
             }
         }
@@ -1277,7 +1281,7 @@
         }
 
         // ============================
-        // GAME FUNCTIONALITY (Original)
+        // GAME FUNCTIONALITY
         // ============================
 
         // Preload images for better performance
@@ -1289,10 +1293,10 @@
                 'assets/images/MainMenuText.png',
                 'assets/images/iconic-bot-button.png',
                 'assets/images/friend-button.png',
-                'assets/images/TutorialPanel.jpg',  // Add tutorial panel
+                'assets/images/TutorialPanel.jpg',
                 'assets/images/bot1.png',
                 'assets/images/you1.png',
-                'assets/images/limited-offer.jpg'  // Preload the special win image
+                'assets/images/limited-offer.jpg'
             ];
             
             imagePaths.forEach(path => {
@@ -1538,8 +1542,6 @@
             // Update player tap speed
             calculatePlayerTapSpeed();
             
-            // Removed the screen flashing effect that was causing issues
-            
             if (battlePosition <= -100) {
                 if (gameMode === 'bot') {
                     endGame('win');
@@ -1584,24 +1586,29 @@
             }
         }
 
-        function endGame(result) {
+        // Updated end game function with API integration
+        async function endGame(result) {
             gameActive = false;
             if (botInterval) {
                 clearInterval(botInterval);
             }
             
-            // Check if this is a win and first time winning
+            // Map game results to API format
+            let apiResult = result;
+            if (result === 'player1win' || result === 'player2win') {
+                apiResult = 'win'; // API expects 'win' or 'lose'
+            }
+            
+            // Save game result to client's API
+            const saveResult = await saveGameResultWithAPI(apiResult);
+            
+            // Check if this is a win
             const isWin = (result === 'win' || result === 'player1win' || result === 'player2win');
-            const isFirstTimeWin = isWin && !userSession.hasWonBefore;
             
-            // Save game result to client's database
-            saveGameResult(result, isFirstTimeWin);
-            
-            // Show special screen for first-time winners, regular modal for others
-            if (isFirstTimeWin) {
-                // Mark that user has now won
-                userSession.hasWonBefore = true;
-                // Show special win screen
+            // Show appropriate result screen based on API response
+            if (isWin && saveResult.coupon_code) {
+                // User gets a coupon - show special win screen
+                userSession.couponCode = saveResult.coupon_code;
                 showSpecialWinScreen();
             } else {
                 // Show regular game result modal
@@ -1634,44 +1641,6 @@
             }
             
             modal.style.display = 'flex';
-        }
-
-        // Save game result function (updated to include first-time win flag)
-        async function saveGameResult(result, isFirstTimeWin = false) {
-            if (!userSession.isAuthenticated) return;
-            
-            // PLACEHOLDER: Replace this with your client's API endpoint
-            console.log('💾 Saving game result via client API...');
-            
-            try {
-                const response = await fetch('/api/save-game-result', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        phone: userSession.phone,
-                        name: userSession.name,
-                        gameMode: gameMode,
-                        result: result,
-                        isFirstTimeWin: isFirstTimeWin,
-                        timestamp: new Date().toISOString()
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const apiResult = await response.json();
-                console.log('✅ Game result saved successfully:', apiResult);
-                return apiResult;
-                
-            } catch (error) {
-                console.error('❌ Save game result API call failed:', error);
-                console.log('🔧 Development mode: Simulating game result save success');
-                return { success: true, message: 'Game result saved successfully (simulated)' };
-            }
         }
 
         function restartGame() {
@@ -1757,10 +1726,27 @@
             document.getElementById('countdown').style.display = 'none';
             document.getElementById('gameInfo').textContent = 'Get Ready to Battle!';
             
-            // Reset any visual effects (removed filter reset since we removed the effect)
-            
             showZoneImages();
         }
+
+        // Utility functions for external configuration
+        function setOutletQR(qrCode) {
+            outletQR = qrCode;
+            console.log('🏪 Outlet QR set to:', outletQR);
+        }
+
+        function setAPIBaseURL(url) {
+            API_CONFIG.baseURL = url;
+            console.log('🔗 API Base URL set to:', url);
+        }
+
+        // Export functions for external use
+        window.TapRaceAPI = {
+            setOutletQR,
+            setAPIBaseURL,
+            getAuthToken: () => authToken,
+            getCustomerId: () => customerId
+        };
 
         // Prevent zoom and handle mobile quirks
         document.addEventListener('gesturestart', e => e.preventDefault());
