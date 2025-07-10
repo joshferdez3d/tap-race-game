@@ -967,6 +967,12 @@
                 }
 
                 console.log('✅ OTP sent successfully:', result);
+                
+                // Store the OTP for reference (though you shouldn't use this in production)
+                if (result.data && result.data.otp) {
+                    console.log('📱 OTP for testing:', result.data.otp);
+                }
+                
                 return result;
                 
             } catch (error) {
@@ -976,6 +982,7 @@
         }
 
         // Verify OTP - Step 2 of signup
+        // Fixed verifyOTPWithAPI function based on actual API response
         async function verifyOTPWithAPI(phone, enteredOTP) {
             console.log('🔍 Verifying OTP with client API');
             
@@ -997,15 +1004,21 @@
 
                 console.log('✅ OTP verified successfully:', result);
                 
-                // Store authentication token and customer ID
-                if (result.token) {
-                    authToken = result.token;
-                    console.log('🔑 Auth token received');
+                // Extract token and customer ID based on actual API response structure
+                if (result.data && result.data.token) {
+                    authToken = result.data.token;
+                    console.log('🔑 Auth token extracted:', authToken);
+                } else {
+                    console.warn('⚠️ No token found in response!');
+                    throw new Error('No authentication token received');
                 }
                 
-                if (result.customer_id) {
-                    customerId = result.customer_id;
-                    console.log('👤 Customer ID:', customerId);
+                if (result.data && result.data.customer && result.data.customer.id) {
+                    customerId = result.data.customer.id.toString(); // Convert to string
+                    console.log('👤 Customer ID extracted:', customerId);
+                } else {
+                    console.warn('⚠️ No customer ID found in response!');
+                    throw new Error('No customer ID received');
                 }
                 
                 return result;
@@ -1018,41 +1031,57 @@
 
         // Save game result
         async function saveGameResultWithAPI(gameResult) {
+            console.log('💾 Attempting to save game result...');
+            console.log('🔑 Current auth token:', authToken);
+            console.log('👤 Current customer ID:', customerId);
+            console.log('🎮 Game result:', gameResult);
+            console.log('🏪 Outlet QR:', outletQR);
+            
             if (!authToken || !customerId) {
-                console.warn('⚠️ No auth token or customer ID available');
+                console.warn('⚠️ Missing authentication data');
                 return { success: false, message: 'Authentication required' };
             }
             
-            console.log('💾 Saving game result via client API...');
-            
             try {
+                // API expects token in request body, not just Authorization header
+                const requestBody = {
+                    customer_id: customerId,
+                    outlet_qr: outletQR,
+                    game_result: gameResult,
+                    token: authToken  // Add token to request body
+                };
+                
+                console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
+                
                 const response = await fetch(`${API_CONFIG.baseURL}/customer/game`, {
                     method: 'POST',
                     headers: {
                         ...API_CONFIG.headers,
-                        'Authorization': `Bearer ${authToken}`
+                        'Authorization': `Bearer ${authToken}`  // Keep Authorization header too
                     },
-                    body: JSON.stringify({
-                        customer_id: customerId,
-                        outlet_qr: outletQR,
-                        game_result: gameResult
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 const result = await response.json();
                 
+                console.log('📥 Game save response:', JSON.stringify(result, null, 2));
+                
                 if (!response.ok) {
+                    console.error('❌ Game save failed with status:', response.status);
                     throw new Error(result.message || `HTTP error! status: ${response.status}`);
                 }
 
                 console.log('✅ Game result saved successfully:', result);
                 
                 // Check if this was a win and if user gets a coupon
-                if (result.coupon_code && gameResult === 'win') {
+                // Based on actual API response: result.data.coupon.code
+                if (result.data && result.data.coupon && result.data.coupon.code && gameResult === 'win') {
                     userSession.hasWonBefore = false; // Show special win screen
-                    userSession.couponCode = result.coupon_code;
+                    userSession.couponCode = result.data.coupon.code;
+                    console.log('🎫 Coupon code received:', result.data.coupon.code);
                 } else {
                     userSession.hasWonBefore = true; // Regular game result
+                    console.log('ℹ️ No coupon generated or game was not a win');
                 }
                 
                 return result;
