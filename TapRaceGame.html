@@ -796,7 +796,7 @@
             <div class="otp-screen">
                 <h1>Enter OTP</h1>
                 <p class="otp-subtitle">
-                  We've sent your 6-digit code to<br>
+                  We've sent your 4-digit code to<br>
                   <strong id="maskedPhone"></strong>
                 </p>
                 <div id="otpError" class="error" style="display: none;"></div>
@@ -806,8 +806,6 @@
                     <input name="otp2" id="otp2" class="otp-input" maxlength="1" required>
                     <input name="otp3" id="otp3" class="otp-input" maxlength="1" required>
                     <input name="otp4" id="otp4" class="otp-input" maxlength="1" required>
-                    <input name="otp5" id="otp5" class="otp-input" maxlength="1" required>
-                    <input name="otp6" id="otp6" class="otp-input" maxlength="1" required>
                   </div>
                   <div class="otp-actions">
                     <button type="button" class="resend-btn" onclick="resendOTP()">RESEND OTP</button>
@@ -1126,14 +1124,11 @@
             const otp2 = document.getElementById('otp2').value;
             const otp3 = document.getElementById('otp3').value;
             const otp4 = document.getElementById('otp4').value;
-            const otp5 = document.getElementById('otp5').value;
-            const otp6 = document.getElementById('otp6').value;
-
             
-            const enteredOTP = otp1 + otp2 + otp3 + otp4 + otp5 + otp6;
+            const enteredOTP = otp1 + otp2 + otp3 + otp4;
             
-            if (enteredOTP.length !== 6) {
-                showOTPError('Please enter all 6 digits.');
+            if (enteredOTP.length !== 4) {
+                showOTPError('Please enter all 4 digits.');
                 return;
             }
             
