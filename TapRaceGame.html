@@ -1276,21 +1276,36 @@
 
         // Show special first-time win screen
         async function showSpecialWinScreen() {
+            console.log('🎊 showSpecialWinScreen called');
+            console.log('🎫 Coupon to display:', userSession.couponCode);
+            
             const specialWinScreen = document.getElementById('specialWinScreen');
             const couponCodeElement = document.getElementById('couponCode');
             
+            if (!specialWinScreen) {
+                console.error('❌ Special win screen element not found!');
+                return;
+            }
+            
+            if (!couponCodeElement) {
+                console.error('❌ Coupon code element not found!');
+                return;
+            }
+            
             // Show the screen first
             specialWinScreen.style.display = 'flex';
+            console.log('👁️ Special win screen display set to flex');
             
-            // Check if we already have a coupon from the API response
+            // Check if we have a coupon from the user session
             if (userSession.couponCode) {
                 couponCodeElement.innerHTML = userSession.couponCode;
+                console.log('✅ Coupon code displayed:', userSession.couponCode);
             } else {
                 // Fallback
                 couponCodeElement.innerHTML = 'WELCOME25';
+                console.log('⚠️ Using fallback coupon code');
             }
         }
-
         // Restart game from special win screen
         function restartFromSpecialWin() {
             document.getElementById('specialWinScreen').style.display = 'none';
@@ -1612,6 +1627,8 @@
 
         // Updated end game function with API integration
         async function endGame(result) {
+            console.log('🏁 Game ending with result:', result);
+            
             gameActive = false;
             if (botInterval) {
                 clearInterval(botInterval);
@@ -1623,19 +1640,30 @@
                 apiResult = 'win'; // API expects 'win' or 'lose'
             }
             
+            console.log('📡 Sending API result:', apiResult);
+            
             // Save game result to client's API
             const saveResult = await saveGameResultWithAPI(apiResult);
             
+            console.log('💾 Save result response:', saveResult);
+            
             // Check if this is a win
             const isWin = (result === 'win' || result === 'player1win' || result === 'player2win');
+            console.log('🏆 Is this a win?', isWin);
+            
+            // Check if user session has coupon
+            console.log('🎫 User session coupon code:', userSession.couponCode);
+            console.log('🎫 Has won before?', userSession.hasWonBefore);
             
             // Show appropriate result screen based on API response
-            if (isWin && saveResult.coupon_code) {
-                // User gets a coupon - show special win screen
-                userSession.couponCode = saveResult.coupon_code;
+            if (isWin && userSession.couponCode && !userSession.hasWonBefore) {
+                console.log('🎉 Showing special win screen with coupon:', userSession.couponCode);
                 showSpecialWinScreen();
             } else {
-                // Show regular game result modal
+                console.log('📱 Showing regular game result modal');
+                console.log('  - Is win:', isWin);
+                console.log('  - Has coupon:', !!userSession.couponCode);
+                console.log('  - Has won before:', userSession.hasWonBefore);
                 showRegularGameResult(result);
             }
         }
