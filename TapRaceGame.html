@@ -627,7 +627,7 @@
 
         .offer-btn img {
             width: auto;
-            height: 60px;
+            height: 100px;  /* Increased from 60px to 100px */
             display: block;
         }
 
@@ -680,6 +680,38 @@
             animation: couponGlow 2s ease-in-out infinite alternate;
             text-align: center;
             min-width: 200px;
+        }
+
+        .congratulations-buttons {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: center;
+        }
+
+        .play-again-btn {
+            background: linear-gradient(145deg, #cf0000, #a00000);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px rgba(207, 0, 0, 0.4);
+            touch-action: manipulation;
+            min-width: 150px;
+        }
+
+        .play-again-btn:hover, .play-again-btn:active {
+            background: linear-gradient(145deg, #ff0000, #cf0000);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(207, 0, 0, 0.6);
         }
 
         /* Special Win Screen Styles */
@@ -749,7 +781,13 @@
             }
 
             .offer-btn img {
-                height: 50px;
+                height: 80px;  /* Increased from 50px to 80px for mobile */
+            }
+
+            .play-again-btn {
+                padding: 12px 25px;
+                font-size: 1rem;
+                min-width: 130px;
             }
 
             .offer-buttons {
@@ -900,6 +938,9 @@
                 <div class="coupon-code-display" id="finalCouponCode">
                     <span class="coupon-loading">Loading...</span>
                 </div>
+            </div>
+            <div class="congratulations-buttons">
+                <button class="play-again-btn" onclick="playAgainFromCongratulations()">Play Again</button>
             </div>
         </div>
     </div>
@@ -1335,6 +1376,18 @@
             
             // Go back to tutorial
             showScreen('tutorialPanel');
+        }
+
+        // Play again from congratulations screen
+        function playAgainFromCongratulations() {
+            console.log('🎮 User wants to play again from congratulations');
+            
+            // Hide congratulations screen
+            document.getElementById('congratulationsScreen').style.display = 'none';
+            
+            // Reset game and start new round
+            resetGame();
+            startCountdown();
         }
 
         // ============================
