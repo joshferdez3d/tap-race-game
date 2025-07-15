@@ -1413,35 +1413,35 @@
                     baselineTapSpeed = Math.max(baselineTapSpeed, currentPlayerTapSpeed);
                 }
             } 
-            // Phase 2: Bot attacks aggressively - PERMANENT once activated (regardless of position)
+            // Phase 2: Bot attacks moderately - PERMANENT once activated (regardless of position)
             else {
                 const currentTapSpeed = calculatePlayerTapSpeed();
                 
-                // Bot attacks at double the player's baseline tapping speed
-                const botAttackSpeed = Math.max(baselineTapSpeed * 2, 8); // Minimum attack speed of 8
+                // Bot attacks at 1.5x the player's baseline tapping speed (reduced from 2x)
+                const botAttackSpeed = Math.max(baselineTapSpeed * 1.5, 6); // Reduced minimum from 8 to 6
                 
-                // Convert bot attack speed to movement units (more aggressive conversion)
-                const botPushRate = botAttackSpeed * 5; // 5 units per "tap"
-                const botPushPerUpdate = botPushRate / 20; // Divide by update frequency (50ms = 20 updates per second)
+                // Convert bot attack speed to movement units (less aggressive)
+                const botPushRate = botAttackSpeed * 3.5; // Reduced from 5 to 3.5 units per "tap"
+                const botPushPerUpdate = botPushRate / 20; // Divide by update frequency
                 
                 // Player's current push rate
                 const playerPushRate = currentTapSpeed * 4; // 4 units per tap
                 const playerPushPerUpdate = playerPushRate / 20;
                 
-                // Net battle: bot has advantage - player needs to significantly outpace bot
+                // Net battle: more balanced between bot and player
                 const netPlayerAdvantage = playerPushPerUpdate - botPushPerUpdate;
                 
                 if (netPlayerAdvantage > 0) {
-                    // Player is tapping faster than bot's attack - player can advance slowly
-                    botCurrentSpeed = botPushPerUpdate - (netPlayerAdvantage * 0.3); // Reduced advantage to player
+                    // Player is tapping faster than bot's attack - player can advance
+                    botCurrentSpeed = botPushPerUpdate - (netPlayerAdvantage * 0.6); // Increased player advantage from 0.3 to 0.6
                     document.getElementById('gameInfo').textContent = 'OVERPOWERING THE BOT! KEEP GOING!';
                 } else {
-                    // Bot is attacking faster than player - bot pushes back hard
-                    const pushbackMultiplier = 1.5; // Amplify bot's advantage
+                    // Bot is attacking faster than player - bot pushes back
+                    const pushbackMultiplier = 1.2; // Reduced from 1.5 to 1.2
                     botCurrentSpeed = botPushPerUpdate + (Math.abs(netPlayerAdvantage) * pushbackMultiplier);
                     
                     const gameInfo = document.getElementById('gameInfo');
-                    gameInfo.textContent = `BOT PUSHING YOU BACK! NEED ${Math.ceil(botAttackSpeed + 1)} TPS!`;
+                    gameInfo.textContent = `BOT PUSHING BACK! NEED ${Math.ceil(botAttackSpeed)} TPS!`;
                     gameInfo.classList.add('intense');
                     
                     // Remove intense class after a moment
@@ -1450,9 +1450,9 @@
                     }, 500);
                 }
                 
-                // Ensure bot always pushes forward with higher minimum speed
-                botCurrentSpeed = Math.max(botCurrentSpeed, botSpeed * 1.0); // Increased minimum
-                botCurrentSpeed = Math.min(botCurrentSpeed, botSpeed * 5); // Increased maximum
+                // Ensure bot pushes forward but with lower intensity
+                botCurrentSpeed = Math.max(botCurrentSpeed, botSpeed * 0.7); // Reduced minimum from 1.0 to 0.7
+                botCurrentSpeed = Math.min(botCurrentSpeed, botSpeed * 3.5); // Reduced maximum from 5 to 3.5
             }
         }
 
