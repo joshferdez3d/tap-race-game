@@ -579,6 +579,109 @@
             to { opacity: 1; transform: scale(1) rotate(0deg); }
         }
 
+        /* Limited Offer Screen Styles */
+        .limited-offer-content {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            text-align: center;
+            box-shadow: none;
+            animation: specialWinPop 0.6s ease-out;
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .limited-offer-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+        }
+
+        .offer-buttons {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .offer-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            touch-action: manipulation;
+            padding: 0;
+        }
+
+        .offer-btn:active {
+            transform: scale(0.95);
+        }
+
+        .offer-btn img {
+            width: auto;
+            height: 60px;
+            display: block;
+        }
+
+        /* Congratulations Screen Styles */
+        .congratulations-content {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            text-align: center;
+            box-shadow: none;
+            animation: specialWinPop 0.6s ease-out;
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .congratulations-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+        }
+
+        .coupon-overlay {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .coupon-code-display {
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 15px 25px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            border-radius: 10px;
+            border: 2px solid #cf0000;
+            box-shadow: 
+                0 0 20px rgba(207, 0, 0, 0.5),
+                inset 0 2px 4px rgba(255, 255, 255, 0.2);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: couponGlow 2s ease-in-out infinite alternate;
+            text-align: center;
+            min-width: 200px;
+        }
+
         /* Special Win Screen Styles */
         .special-win-screen {
             position: fixed;
@@ -595,60 +698,6 @@
             padding: 20px;
         }
 
-        .special-win-content {
-            background: #000;
-            border: 3px solid #cf0000;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 
-                0 0 40px rgba(207, 0, 0, 0.7),
-                0 30px 60px rgba(0,0,0,0.8);
-            animation: specialWinPop 0.6s ease-out;
-            width: 100%;
-            max-width: 450px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .special-win-image {
-            width: 100%;
-            height: auto;
-            display: block;
-            border-radius: 17px 17px 0 0;
-        }
-
-        .coupon-section {
-            padding: 1.5rem;
-            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
-            border-top: 2px solid #cf0000;
-        }
-
-        .coupon-label {
-            color: #fff;
-            font-size: 1.1rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 1rem;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-        }
-
-        .coupon-code {
-            background: linear-gradient(145deg, #cf0000, #a00000);
-            color: #fff;
-            padding: 1rem 1.5rem;
-            font-size: 1.3rem;
-            font-weight: 900;
-            letter-spacing: 3px;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            box-shadow: 
-                0 0 20px rgba(207, 0, 0, 0.5),
-                inset 0 2px 4px rgba(255, 255, 255, 0.2);
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            animation: couponGlow 2s ease-in-out infinite alternate;
-        }
-
         @keyframes couponGlow {
             from { 
                 box-shadow: 0 0 20px rgba(207, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2);
@@ -662,20 +711,6 @@
             color: #888;
             font-style: italic;
             font-size: 1rem;
-        }
-
-        .special-win-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .special-win-buttons .restart-btn,
-        .special-win-buttons .menu-btn {
-            margin: 0;
-            width: 100%;
-            max-width: none;
         }
 
         @keyframes specialWinPop {
@@ -706,14 +741,25 @@
                 font-size: 1.2rem; 
             }
 
-            .coupon-code {
-                font-size: 1.1rem;
+            .coupon-code-display {
+                font-size: 1.2rem;
                 letter-spacing: 2px;
-                padding: 0.8rem 1rem;
+                padding: 12px 20px;
+                min-width: 180px;
             }
 
-            .special-win-content {
-                max-width: 95%;
+            .offer-btn img {
+                height: 50px;
+            }
+
+            .offer-buttons {
+                gap: 20px;
+                bottom: 15px;
+            }
+
+            .coupon-overlay {
+                bottom: 40px;
+                width: 90%;
             }
         }
 
@@ -831,18 +877,28 @@
         </div>
     </div>
 
-    <!-- Special First Win Screen -->
-    <div class="special-win-screen" id="specialWinScreen">
-        <div class="special-win-content">
-            <img src="assets/images/limited-offer.jpg" alt="Limited Offer" class="special-win-image">
-            <div class="coupon-section">
-                <div class="coupon-label">Your Exclusive Coupon Code:</div>
-                <div class="coupon-code" id="couponCode">
+    <!-- Limited Offer Screen -->
+    <div class="special-win-screen" id="limitedOfferScreen">
+        <div class="limited-offer-content">
+            <img src="assets/images/limited-offer.png" alt="Limited Offer" class="limited-offer-image">
+            <div class="offer-buttons">
+                <button class="offer-btn yes-btn" onclick="acceptOffer()">
+                    <img src="assets/images/Yes Button.png" alt="Yes">
+                </button>
+                <button class="offer-btn no-btn" onclick="declineOffer()">
+                    <img src="assets/images/No Button.png" alt="No">
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Congratulations Screen -->
+    <div class="special-win-screen" id="congratulationsScreen">
+        <div class="congratulations-content">
+            <img src="assets/images/congratulations.png" alt="Congratulations" class="congratulations-image">
+            <div class="coupon-overlay">
+                <div class="coupon-code-display" id="finalCouponCode">
                     <span class="coupon-loading">Loading...</span>
-                </div>
-                <div class="special-win-buttons">
-                    <button class="restart-btn" onclick="restartFromSpecialWin()">Play Again</button>
-                    <button class="menu-btn" onclick="backToMenuFromSpecialWin()">Back to Menu</button>
                 </div>
             </div>
         </div>
@@ -1224,52 +1280,60 @@
         setupOTPInputs();
 
         // ============================
-        // SPECIAL WIN SCREEN FUNCTIONALITY
+        // NEW WIN FLOW FUNCTIONALITY
         // ============================
 
-        // Show special first-time win screen
-        async function showSpecialWinScreen() {
-            console.log('🎊 showSpecialWinScreen called');
-            console.log('🎫 Coupon to display:', userSession.couponCode);
+        // Show limited offer screen first
+        async function showLimitedOfferScreen() {
+            console.log('🎁 Showing limited offer screen');
             
-            const specialWinScreen = document.getElementById('specialWinScreen');
-            const couponCodeElement = document.getElementById('couponCode');
-            
-            if (!specialWinScreen) {
-                console.error('❌ Special win screen element not found!');
+            const limitedOfferScreen = document.getElementById('limitedOfferScreen');
+            if (!limitedOfferScreen) {
+                console.error('❌ Limited offer screen element not found!');
                 return;
             }
             
-            if (!couponCodeElement) {
-                console.error('❌ Coupon code element not found!');
+            limitedOfferScreen.style.display = 'flex';
+            console.log('👁️ Limited offer screen displayed');
+        }
+
+        // Accept offer - show congratulations screen
+        async function acceptOffer() {
+            console.log('✅ User accepted offer');
+            
+            // Hide limited offer screen
+            document.getElementById('limitedOfferScreen').style.display = 'none';
+            
+            // Show congratulations screen
+            const congratulationsScreen = document.getElementById('congratulationsScreen');
+            const couponCodeElement = document.getElementById('finalCouponCode');
+            
+            if (!congratulationsScreen || !couponCodeElement) {
+                console.error('❌ Congratulations screen elements not found!');
                 return;
             }
             
-            // Show the screen first
-            specialWinScreen.style.display = 'flex';
-            console.log('👁️ Special win screen display set to flex');
+            congratulationsScreen.style.display = 'flex';
             
-            // Check if we have a coupon from the user session
+            // Display coupon code
             if (userSession.couponCode) {
                 couponCodeElement.innerHTML = userSession.couponCode;
-                console.log('✅ Coupon code displayed:', userSession.couponCode);
+                console.log('✅ Final coupon code displayed:', userSession.couponCode);
             } else {
                 // Fallback
                 couponCodeElement.innerHTML = 'WELCOME25';
                 console.log('⚠️ Using fallback coupon code');
             }
         }
-        
-        // Restart game from special win screen
-        function restartFromSpecialWin() {
-            document.getElementById('specialWinScreen').style.display = 'none';
-            resetGame();
-            startCountdown();
-        }
 
-        // Back to menu from special win screen
-        function backToMenuFromSpecialWin() {
-            document.getElementById('specialWinScreen').style.display = 'none';
+        // Decline offer - go back to tutorial
+        function declineOffer() {
+            console.log('❌ User declined offer');
+            
+            // Hide limited offer screen
+            document.getElementById('limitedOfferScreen').style.display = 'none';
+            
+            // Go back to tutorial
             showScreen('tutorialPanel');
         }
 
@@ -1288,7 +1352,10 @@
                 'assets/images/TutorialPanel.jpg',
                 'assets/images/bot1.png',
                 'assets/images/you1.png',
-                'assets/images/limited-offer.jpg'
+                'assets/images/limited-offer.png',
+                'assets/images/congratulations.png',
+                'assets/images/Yes Button.png',
+                'assets/images/No Button.png'
             ];
             
             imagePaths.forEach(path => {
@@ -1585,8 +1652,8 @@
             
             // Show appropriate result screen based on API response
             if (isWin && userSession.couponCode && !userSession.hasWonBefore) {
-                console.log('🎉 Showing special win screen with coupon:', userSession.couponCode);
-                showSpecialWinScreen();
+                console.log('🎉 Showing limited offer screen for first-time winner');
+                showLimitedOfferScreen();
             } else {
                 console.log('📱 Showing regular game result modal');
                 console.log('  - Is win:', isWin);
