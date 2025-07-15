@@ -1405,11 +1405,11 @@
                     baselineTapSpeed = Math.max(baselineTapSpeed, currentPlayerTapSpeed);
                 }
             } 
-            // Phase 2: Hard resistance (75% - 100% progress)
+            // Phase 2: Active pushback phase (75% - 100% progress)
             else {
                 if (!hasReachedAdaptivePhase) {
                     hasReachedAdaptivePhase = true;
-                    console.log('🎯 Reached hard phase. Baseline tap speed:', baselineTapSpeed);
+                    console.log('🎯 Reached active pushback phase. Baseline tap speed:', baselineTapSpeed);
                 }
                 
                 const currentTapSpeed = calculatePlayerTapSpeed();
@@ -1418,34 +1418,37 @@
                 const tapSpeedIncrease = currentTapSpeed - baselineTapSpeed;
                 const tapSpeedMultiplier = Math.max(1, currentTapSpeed / Math.max(baselineTapSpeed, 1));
                 
-                // Player needs to tap significantly faster to make progress
-                if (tapSpeedIncrease > 3 && tapSpeedMultiplier > 1.5) {
-                    // Player is tapping much faster - allow some progress but with resistance
-                    const playerPushRate = currentTapSpeed * 4; // 4 units per tap
-                    const counterSpeed = playerPushRate / 20; // Divide by update frequency
-                    
-                    // Strong resistance - bot pushes back hard
-                    botCurrentSpeed = counterSpeed + (botSpeed * 1.2);
-                    
-                    document.getElementById('gameInfo').textContent = 'EXCELLENT! KEEP GOING!';
-                } 
-                else if (tapSpeedIncrease > 1 && tapSpeedMultiplier > 1.2) {
-                    // Player is tapping faster but not enough - minimal progress
+                // Bot actively pushes back - player needs to overcome bot's push rate
+                const baseBotPushRate = botSpeed * 1.5; // Bot's base aggressive push
+                
+                // Player needs to tap significantly faster to overcome bot's push
+                if (tapSpeedIncrease > 4 && tapSpeedMultiplier > 1.8) {
+                    // Player is tapping much faster - bot still pushes but player can overcome
                     const playerPushRate = currentTapSpeed * 4;
-                    const counterSpeed = playerPushRate / 20;
+                    const netPlayerAdvantage = playerPushRate / 20; // Player's effective push per update
                     
-                    // Very strong resistance - almost holding position
-                    botCurrentSpeed = counterSpeed + (botSpeed * 1.8);
+                    // Bot pushes back but player can slowly overcome
+                    botCurrentSpeed = baseBotPushRate - (netPlayerAdvantage * 0.3);
                     
-                    document.getElementById('gameInfo').textContent = 'TAP MUCH FASTER! USE BOTH HANDS!';
+                    document.getElementById('gameInfo').textContent = 'FIGHTING THE BOT! KEEP GOING!';
+                } 
+                else if (tapSpeedIncrease > 2 && tapSpeedMultiplier > 1.4) {
+                    // Player is tapping faster but bot still has advantage
+                    const playerPushRate = currentTapSpeed * 4;
+                    const netPlayerAdvantage = playerPushRate / 20;
+                    
+                    // Bot pushes back stronger than player - player loses ground slowly
+                    botCurrentSpeed = baseBotPushRate - (netPlayerAdvantage * 0.1);
+                    
+                    document.getElementById('gameInfo').textContent = 'BOT IS PUSHING! TAP FASTER!';
                 } 
                 else {
-                    // Player is not tapping fast enough - bot pushes them back
-                    botCurrentSpeed = botSpeed * 2.5; // Strong pushback
+                    // Player is not tapping fast enough - bot dominates and pushes back hard
+                    botCurrentSpeed = baseBotPushRate + (botSpeed * 0.8); // Extra strong push
                     
                     // Add intensity to the UI
                     const gameInfo = document.getElementById('gameInfo');
-                    gameInfo.textContent = 'TAP FASTER OR LOSE!';
+                    gameInfo.textContent = 'BOT IS DOMINATING! FIGHT BACK!';
                     gameInfo.classList.add('intense');
                     
                     // Remove intense class after a moment
@@ -1454,9 +1457,9 @@
                     }, 500);
                 }
                 
-                // Cap the bot speed to prevent it from being impossibly hard
-                botCurrentSpeed = Math.min(botCurrentSpeed, botSpeed * 3.5);
+                // Ensure bot always pushes forward (positive speed) in this phase
                 botCurrentSpeed = Math.max(botCurrentSpeed, botSpeed * 0.8);
+                botCurrentSpeed = Math.min(botCurrentSpeed, botSpeed * 3.5);
             }
         }
 
@@ -1473,17 +1476,20 @@
                 
                 updateBattleVisuals();
                 
-                // Check if bot is pushing player back significantly
+                // Check win/lose conditions
                 if (battlePosition >= 100) {
                     endGame('lose');
                 } else if (battlePosition > 85 && hasReachedAdaptivePhase) {
-                    // Player is losing ground in hard phase - increase pressure
+                    // Player is losing ground in pushback phase - increase pressure
                     intenseMoments++;
                     if (intenseMoments > 20) { // About 1 second at 50ms intervals
                         const gameInfo = document.getElementById('gameInfo');
-                        gameInfo.textContent = 'LAST CHANCE! TAP LIKE CRAZY!';
+                        gameInfo.textContent = 'BOT IS WINNING! LAST CHANCE!';
                         gameInfo.classList.add('intense');
                     }
+                } else if (battlePosition > 75 && battlePosition <= 85 && hasReachedAdaptivePhase) {
+                    // Reset intense moments when player is holding their ground
+                    intenseMoments = Math.max(0, intenseMoments - 1);
                 }
             }, 50);
         }
