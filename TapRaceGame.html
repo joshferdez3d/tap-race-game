@@ -884,6 +884,7 @@
         let baselineTapSpeed = 0;
         let hasReachedAdaptivePhase = false;
         let intenseMoments = 0; // Track how many times player struggled
+        let botAggressiveModeActivated = false; // Track if bot has entered aggressive mode
         
         // User session data
         let userSession = {
@@ -1395,8 +1396,15 @@
             const playerProgress = Math.abs(battlePosition);
             const progressPercentage = playerProgress / 100;
             
-            // Phase 1: Easy gameplay (0% - 60% progress)
-            if (progressPercentage <= 0.60) {
+            // Check if player has reached 60% for the first time
+            if (progressPercentage >= 0.60 && !botAggressiveModeActivated) {
+                botAggressiveModeActivated = true;
+                hasReachedAdaptivePhase = true;
+                console.log('🎯 Bot aggressive mode permanently activated! Baseline speed:', baselineTapSpeed);
+            }
+            
+            // Phase 1: Easy gameplay (0% - 60% progress) - ONLY if aggressive mode not activated
+            if (progressPercentage < 0.60 && !botAggressiveModeActivated) {
                 // Bot plays at easy difficulty - allows steady progress
                 botCurrentSpeed = botSpeed * 0.6;
                 
@@ -1405,20 +1413,15 @@
                     baselineTapSpeed = Math.max(baselineTapSpeed, currentPlayerTapSpeed);
                 }
             } 
-            // Phase 2: Bot attacks aggressively at double player's baseline speed (60% - 100% progress)
+            // Phase 2: Bot attacks aggressively - PERMANENT once activated (regardless of position)
             else {
-                if (!hasReachedAdaptivePhase) {
-                    hasReachedAdaptivePhase = true;
-                    console.log('🎯 Bot attacking aggressively at double baseline speed:', baselineTapSpeed * 2);
-                }
-                
                 const currentTapSpeed = calculatePlayerTapSpeed();
                 
                 // Bot attacks at double the player's baseline tapping speed
                 const botAttackSpeed = Math.max(baselineTapSpeed * 2, 8); // Minimum attack speed of 8
                 
                 // Convert bot attack speed to movement units (more aggressive conversion)
-                const botPushRate = botAttackSpeed * 5; // Increased from 4 to 5 units per "tap"
+                const botPushRate = botAttackSpeed * 5; // 5 units per "tap"
                 const botPushPerUpdate = botPushRate / 20; // Divide by update frequency (50ms = 20 updates per second)
                 
                 // Player's current push rate
@@ -1469,7 +1472,7 @@
                 // Check win/lose conditions
                 if (battlePosition >= 100) {
                     endGame('lose');
-                } else if (battlePosition > 80 && hasReachedAdaptivePhase) {
+                } else if (battlePosition > 80 && botAggressiveModeActivated) {
                     // Player is losing ground in bot attack phase - increase pressure
                     intenseMoments++;
                     if (intenseMoments > 15) { // Reduced from 20 to make it more urgent
@@ -1478,7 +1481,7 @@
                         gameInfo.textContent = `LOSING BADLY! NEED ${Math.ceil(botAttackSpeed + 3)} TPS!`;
                         gameInfo.classList.add('intense');
                     }
-                } else if (battlePosition > 60 && battlePosition <= 80 && hasReachedAdaptivePhase) {
+                } else if (battlePosition > 60 && battlePosition <= 80 && botAggressiveModeActivated) {
                     // Reset intense moments when player is holding their ground
                     intenseMoments = Math.max(0, intenseMoments - 1);
                 }
@@ -1687,6 +1690,8 @@
             baselineTapSpeed = 0;
             hasReachedAdaptivePhase = false;
             intenseMoments = 0;
+            botAggressiveModeActivated = false;
+            botAggressiveModeActivated = false;
             intenseMoments = 0;
             
             if (botInterval) {
