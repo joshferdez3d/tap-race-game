@@ -281,7 +281,7 @@
             pointer-events: none;
         }
 
-        /* Game styles remain the same as original */
+        /* Game styles */
         .intro-screen {
             cursor: pointer;
             touch-action: manipulation;
@@ -295,37 +295,7 @@
             object-position: center;
         }
 
-        .main-menu {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-
-        .menu-text {
-            position: absolute;
-            top: 20%;
-            left: 5%;
-            width: 90%;
-            height: 90%;
-            background-size: contain;
-            background-position: center top;
-            background-repeat: no-repeat;
-            pointer-events: none;
-        }
-
-        // Remove unused CSS for main menu and play button
-        .main-menu,
-        .menu-text,
-        .menu-button,
-        .play-button {
-            display: none;
-        }
-
-        /* Game Area Styles (keeping original game styles) */
+        /* Game Area Styles */
         .game-area {
             width: 100vw;
             height: 100vh;
@@ -608,7 +578,7 @@
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 10px;
+            gap: 5px;
             align-items: center;
         }
 
@@ -627,7 +597,7 @@
 
         .offer-btn img {
             width: auto;
-            height: auto;  /* Increased from 60px to 100px */
+            height: auto;
             display: block;
         }
 
@@ -781,7 +751,7 @@
             }
 
             .offer-btn img {
-                height: 200px;  /* Increased from 50px to 80px for mobile */
+                height: 200px;
             }
 
             .play-again-btn {
@@ -791,7 +761,7 @@
             }
 
             .offer-buttons {
-                gap: 4px;
+                gap: 2px;
                 bottom: 5px;
             }
 
@@ -1367,15 +1337,15 @@
             }
         }
 
-        // Decline offer - go back to tutorial
+        // Decline offer - reset game and go back to tutorial (same as Play Again)
         function declineOffer() {
             console.log('❌ User declined offer');
             
             // Hide limited offer screen
             document.getElementById('limitedOfferScreen').style.display = 'none';
             
-            // Go back to tutorial
-            showScreen('tutorialPanel');
+            // Reset the game completely and go back to tutorial
+            resetGameAndBackToTutorial();
         }
 
         // Play again from congratulations screen
@@ -1385,9 +1355,67 @@
             // Hide congratulations screen
             document.getElementById('congratulationsScreen').style.display = 'none';
             
-            // Reset game and start new round
-            resetGame();
-            startCountdown();
+            // Reset the game completely and go back to tutorial
+            resetGameAndBackToTutorial();
+        }
+
+        // Helper function to reset game and go back to tutorial
+        function resetGameAndBackToTutorial() {
+            console.log('🔄 Resetting game and going back to tutorial');
+            
+            // Hide game area if it's showing
+            document.getElementById('gameArea').style.display = 'none';
+            
+            // Stop any running bot intervals
+            if (botInterval) {
+                clearInterval(botInterval);
+                botInterval = null;
+            }
+            
+            // Reset all game state variables
+            gameActive = false;
+            gameStarted = false;
+            battlePosition = 0;
+            gameStartTime = 0;
+            botCurrentSpeed = botSpeed;
+            
+            // Reset player metrics
+            playerTapCount = 0;
+            playerTapTimes = [];
+            currentPlayerTapSpeed = 0;
+            baselineTapSpeed = 0;
+            hasReachedAdaptivePhase = false;
+            intenseMoments = 0;
+            botAggressiveModeActivated = false;
+            
+            // Reset game area UI elements
+            const gameInfo = document.getElementById('gameInfo');
+            const playerFill = document.getElementById('playerFill');
+            const opponentFill = document.getElementById('opponentFill');
+            const countdown = document.getElementById('countdown');
+            const topZoneImage = document.getElementById('topZoneImage');
+            const bottomZoneImage = document.getElementById('bottomZoneImage');
+            
+            if (gameInfo) {
+                gameInfo.textContent = 'Get Ready to Battle!';
+                gameInfo.classList.remove('intense');
+            }
+            if (playerFill) playerFill.style.height = '50%';
+            if (opponentFill) opponentFill.style.height = '50%';
+            if (countdown) countdown.style.display = 'none';
+            if (topZoneImage) {
+                topZoneImage.classList.remove('hidden');
+                topZoneImage.src = 'assets/images/bot1.png';
+                topZoneImage.alt = 'Bot';
+            }
+            if (bottomZoneImage) {
+                bottomZoneImage.classList.remove('hidden');
+                bottomZoneImage.src = 'assets/images/you1.png';
+                bottomZoneImage.alt = 'You';
+            }
+            
+            // Show tutorial screen
+            showScreen('tutorialPanel');
         }
 
         // ============================
@@ -1811,8 +1839,6 @@
             hasReachedAdaptivePhase = false;
             intenseMoments = 0;
             botAggressiveModeActivated = false;
-            botAggressiveModeActivated = false;
-            intenseMoments = 0;
             
             if (botInterval) {
                 clearInterval(botInterval);
