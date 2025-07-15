@@ -317,38 +317,12 @@
             pointer-events: none;
         }
 
-        .menu-button {
-            position: absolute;
-            cursor: pointer;
-            transition: transform 0.3s ease, filter 0.3s ease;
-            touch-action: manipulation;
-            will-change: auto;
-            backface-visibility: hidden;
-            transform: translateX(-50%) translateZ(0);
-            left: 50% !important;
-        }
-
-        .menu-button:active {
-            transform: translateX(-50%) translateZ(0) scale(0.95);
-            filter: brightness(1.2);
-        }
-
-        .menu-button img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .iconic-bot-button {
-            bottom: 40% !important;
-            width: 60% !important;
-            max-width: 300px !important;
-        }
-
-        .friend-button {
-            bottom: 25% !important;
-            width: 60% !important;
-            max-width: 300px !important;
+        // Remove unused CSS for main menu and play button
+        .main-menu,
+        .menu-text,
+        .menu-button,
+        .play-button {
+            display: none;
         }
 
         /* Game Area Styles (keeping original game styles) */
@@ -717,10 +691,6 @@
 
         /* Mobile optimizations */
         @media (max-width: 480px) {
-            .iconic-bot-button, .friend-button {
-                width: 70%;
-            }
-            
             .zone-image {
                 width: 80px;
                 height: 80px;
@@ -822,27 +792,12 @@
     </div>
 
     <!-- Intro Panel 2 -->
-    <div class="screen intro-screen" id="introPanel2" onclick="showMainMenu()">
+    <div class="screen intro-screen" id="introPanel2" onclick="showTutorial()">
         <img src="assets/images/IntroPanel2.jpg" alt="Intro Panel 2" class="intro-image">
     </div>
 
-    <!-- Main Menu -->
-    <div class="screen" id="mainMenu">
-        <div class="main-menu" style="background-image: url('assets/images/MainMenu-GameBG.jpg');">
-            <div class="menu-text" style="background-image: url('assets/images/MainMenuText.png');"></div>
-            
-            <div class="menu-button iconic-bot-button" onclick="showTutorial('bot')">
-                <img src="assets/images/iconic-bot-button.png" alt="Iconic Bot">
-            </div>
-            
-            <div class="menu-button friend-button" onclick="showTutorial('friend')">
-                <img src="assets/images/friend-button.png" alt="Friend">
-            </div>
-        </div>
-    </div>
-
     <!-- Tutorial Panel -->
-    <div class="screen intro-screen" id="tutorialPanel" onclick="startSelectedMode()">
+    <div class="screen intro-screen" id="tutorialPanel" onclick="startGame()">
         <img src="assets/images/TutorialPanel.jpg" alt="Tutorial Panel" class="intro-image">
     </div>
 
@@ -913,8 +868,6 @@
 
         // Global variables
         let currentScreen = 'loginScreen';
-        let gameMode = '';
-        let selectedGameMode = '';
         let gameActive = false;
         let gameStarted = false;
         let battlePosition = 0;
@@ -982,7 +935,6 @@
         }
 
         // Verify OTP - Step 2 of signup
-        // Fixed verifyOTPWithAPI function based on actual API response
         async function verifyOTPWithAPI(phone, enteredOTP) {
             console.log('🔍 Verifying OTP with client API');
             
@@ -1074,7 +1026,6 @@
                 console.log('✅ Game result saved successfully:', result);
                 
                 // Check if this was a win and if user gets a coupon
-                // Based on actual API response: result.data.coupon.code
                 if (result.data && result.data.coupon && result.data.coupon.code && gameResult === 'win') {
                     userSession.hasWonBefore = false; // Show special win screen
                     userSession.couponCode = result.data.coupon.code;
@@ -1306,6 +1257,7 @@
                 console.log('⚠️ Using fallback coupon code');
             }
         }
+        
         // Restart game from special win screen
         function restartFromSpecialWin() {
             document.getElementById('specialWinScreen').style.display = 'none';
@@ -1316,7 +1268,7 @@
         // Back to menu from special win screen
         function backToMenuFromSpecialWin() {
             document.getElementById('specialWinScreen').style.display = 'none';
-            backToMenu();
+            showScreen('tutorialPanel');
         }
 
         // ============================
@@ -1331,7 +1283,6 @@
                 'assets/images/MainMenu-GameBG.jpg',
                 'assets/images/MainMenuText.png',
                 'assets/images/iconic-bot-button.png',
-                'assets/images/friend-button.png',
                 'assets/images/TutorialPanel.jpg',
                 'assets/images/bot1.png',
                 'assets/images/you1.png',
@@ -1358,35 +1309,17 @@
             showScreen('introPanel2');
         }
 
-        function showMainMenu() {
-            showScreen('mainMenu');
-        }
-
-        // Show tutorial screen before game mode selection
-        function showTutorial(mode) {
-            selectedGameMode = mode;
+        function showTutorial() {
             showScreen('tutorialPanel');
         }
 
-        // Start the selected game mode after tutorial
-        function startSelectedMode() {
-            selectMode(selectedGameMode);
-        }
-
-        function selectMode(mode) {
-            gameMode = mode;
-            
-            // Update zone images based on game mode
+        // Start game directly (always bot mode)
+        function startGame() {
+            // Set bot mode images
             const topZoneImage = document.getElementById('topZoneImage');
-            if (mode === 'bot') {
-                topZoneImage.src = 'assets/images/bot1.png';
-                topZoneImage.alt = 'Bot';
-                document.getElementById('gameInfo').textContent = 'Push Back the Bot!';
-            } else {
-                topZoneImage.src = 'assets/images/you1.png';
-                topZoneImage.alt = 'Player 2';
-                document.getElementById('gameInfo').textContent = 'Player vs Player Battle!';
-            }
+            topZoneImage.src = 'assets/images/bot1.png';
+            topZoneImage.alt = 'Bot';
+            document.getElementById('gameInfo').textContent = 'Push Back the Bot!';
             
             // Show game area and start countdown
             document.getElementById(currentScreen).classList.remove('active');
@@ -1414,7 +1347,7 @@
                     countdown.style.animation = 'countdownPulse 1s ease-in-out';
                 } else {
                     countdown.style.display = 'none';
-                    startGame();
+                    startBotGame();
                     clearInterval(countInterval);
                 }
                 
@@ -1424,7 +1357,7 @@
             }, 1000);
         }
 
-        function startGame() {
+        function startBotGame() {
             gameActive = true;
             gameStarted = true;
             battlePosition = 0;
@@ -1441,11 +1374,7 @@
             document.getElementById('gameInfo').textContent = 'TAP TO DOMINATE!';
             
             updateBattleVisuals();
-            
-            if (gameMode === 'bot') {
-                startBot();
-            }
-            
+            startBot();
             setupEventListeners();
         }
 
@@ -1531,36 +1460,16 @@
         }
 
         function setupEventListeners() {
-            const topZone = document.getElementById('topZone');
             const bottomZone = document.getElementById('bottomZone');
             
             const events = ['click', 'touchstart', 'mousedown', 'pointerdown'];
             
-            const newTopZone = topZone.cloneNode(true);
             const newBottomZone = bottomZone.cloneNode(true);
-            
-            topZone.parentNode.replaceChild(newTopZone, topZone);
             bottomZone.parentNode.replaceChild(newBottomZone, bottomZone);
             
             events.forEach(eventType => {
-                document.getElementById('topZone').addEventListener(eventType, handleTopTouch, { passive: false });
                 document.getElementById('bottomZone').addEventListener(eventType, handleBottomTouch, { passive: false });
             });
-        }
-
-        function handleTopTouch(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (!gameActive || gameMode === 'bot') return;
-            
-            hideZoneImages();
-            battlePosition += 4;
-            updateBattleVisuals();
-            
-            if (battlePosition >= 100) {
-                endGame('player2win');
-            }
         }
 
         function handleBottomTouch(e) {
@@ -1582,11 +1491,7 @@
             calculatePlayerTapSpeed();
             
             if (battlePosition <= -100) {
-                if (gameMode === 'bot') {
-                    endGame('win');
-                } else {
-                    endGame('player1win');
-                }
+                endGame('win');
             }
         }
 
@@ -1634,21 +1539,15 @@
                 clearInterval(botInterval);
             }
             
-            // Map game results to API format
-            let apiResult = result;
-            if (result === 'player1win' || result === 'player2win') {
-                apiResult = 'win'; // API expects 'win' or 'lose'
-            }
-            
-            console.log('📡 Sending API result:', apiResult);
+            console.log('📡 Sending API result:', result);
             
             // Save game result to client's API
-            const saveResult = await saveGameResultWithAPI(apiResult);
+            const saveResult = await saveGameResultWithAPI(result);
             
             console.log('💾 Save result response:', saveResult);
             
             // Check if this is a win
-            const isWin = (result === 'win' || result === 'player1win' || result === 'player2win');
+            const isWin = (result === 'win');
             console.log('🏆 Is this a win?', isWin);
             
             // Check if user session has coupon
@@ -1682,14 +1581,6 @@
                     resultText.textContent = 'Bot Overwhelmed You!';
                     resultText.className = 'lose';
                     break;
-                case 'player1win':
-                    resultText.textContent = 'Player 1 Dominates!';
-                    resultText.className = 'win';
-                    break;
-                case 'player2win':
-                    resultText.textContent = 'Player 2 Dominates!';
-                    resultText.className = 'win';
-                    break;
             }
             
             modal.style.display = 'flex';
@@ -1717,8 +1608,8 @@
             botCurrentSpeed = botSpeed;
             
             document.getElementById(currentScreen).classList.remove('active');
-            document.getElementById('mainMenu').classList.add('active');
-            currentScreen = 'mainMenu';
+            document.getElementById('tutorialPanel').classList.add('active');
+            currentScreen = 'tutorialPanel';
             
             setTimeout(() => {
                 resetGameAreaSafe();
@@ -1726,7 +1617,7 @@
         }
         
         function resetGameAreaSafe() {
-            if (currentScreen !== 'mainMenu') {
+            if (currentScreen !== 'tutorialPanel') {
                 return;
             }
             
