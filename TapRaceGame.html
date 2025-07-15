@@ -1405,50 +1405,39 @@
                     baselineTapSpeed = Math.max(baselineTapSpeed, currentPlayerTapSpeed);
                 }
             } 
-            // Phase 2: Active pushback phase (75% - 100% progress)
+            // Phase 2: Bot attacks at double player's baseline speed (75% - 100% progress)
             else {
                 if (!hasReachedAdaptivePhase) {
                     hasReachedAdaptivePhase = true;
-                    console.log('🎯 Reached active pushback phase. Baseline tap speed:', baselineTapSpeed);
+                    console.log('🎯 Bot attacking at double baseline speed:', baselineTapSpeed * 2);
                 }
                 
                 const currentTapSpeed = calculatePlayerTapSpeed();
                 
-                // Calculate how much faster player is tapping compared to baseline
-                const tapSpeedIncrease = currentTapSpeed - baselineTapSpeed;
-                const tapSpeedMultiplier = Math.max(1, currentTapSpeed / Math.max(baselineTapSpeed, 1));
+                // Bot attacks at double the player's baseline tapping speed
+                const botAttackSpeed = Math.max(baselineTapSpeed * 2, 8); // Minimum attack speed of 8
                 
-                // Bot actively pushes back - player needs to overcome bot's push rate
-                const baseBotPushRate = botSpeed * 1.5; // Bot's base aggressive push
+                // Convert bot attack speed to movement units
+                const botPushRate = botAttackSpeed * 4; // 4 units per "tap"
+                const botPushPerUpdate = botPushRate / 20; // Divide by update frequency (50ms = 20 updates per second)
                 
-                // Player needs to tap significantly faster to overcome bot's push
-                if (tapSpeedIncrease > 4 && tapSpeedMultiplier > 1.8) {
-                    // Player is tapping much faster - bot still pushes but player can overcome
-                    const playerPushRate = currentTapSpeed * 4;
-                    const netPlayerAdvantage = playerPushRate / 20; // Player's effective push per update
+                // Player's current push rate
+                const playerPushRate = currentTapSpeed * 4; // 4 units per tap
+                const playerPushPerUpdate = playerPushRate / 20;
+                
+                // Net battle: if player pushes faster than bot, player advances
+                const netPlayerAdvantage = playerPushPerUpdate - botPushPerUpdate;
+                
+                if (netPlayerAdvantage > 0) {
+                    // Player is tapping faster than bot's attack - player can advance
+                    botCurrentSpeed = botPushPerUpdate - (netPlayerAdvantage * 0.5); // Reduced bot speed
+                    document.getElementById('gameInfo').textContent = 'OVERPOWERING THE BOT! KEEP GOING!';
+                } else {
+                    // Bot is attacking faster than player - bot pushes back
+                    botCurrentSpeed = botPushPerUpdate + (Math.abs(netPlayerAdvantage) * 0.3); // Increased bot speed
                     
-                    // Bot pushes back but player can slowly overcome
-                    botCurrentSpeed = baseBotPushRate - (netPlayerAdvantage * 0.3);
-                    
-                    document.getElementById('gameInfo').textContent = 'FIGHTING THE BOT! KEEP GOING!';
-                } 
-                else if (tapSpeedIncrease > 2 && tapSpeedMultiplier > 1.4) {
-                    // Player is tapping faster but bot still has advantage
-                    const playerPushRate = currentTapSpeed * 4;
-                    const netPlayerAdvantage = playerPushRate / 20;
-                    
-                    // Bot pushes back stronger than player - player loses ground slowly
-                    botCurrentSpeed = baseBotPushRate - (netPlayerAdvantage * 0.1);
-                    
-                    document.getElementById('gameInfo').textContent = 'BOT IS PUSHING! TAP FASTER!';
-                } 
-                else {
-                    // Player is not tapping fast enough - bot dominates and pushes back hard
-                    botCurrentSpeed = baseBotPushRate + (botSpeed * 0.8); // Extra strong push
-                    
-                    // Add intensity to the UI
                     const gameInfo = document.getElementById('gameInfo');
-                    gameInfo.textContent = 'BOT IS DOMINATING! FIGHT BACK!';
+                    gameInfo.textContent = `BOT ATTACKING! TAP FASTER THAN ${Math.ceil(botAttackSpeed)} TPS!`;
                     gameInfo.classList.add('intense');
                     
                     // Remove intense class after a moment
@@ -1457,9 +1446,9 @@
                     }, 500);
                 }
                 
-                // Ensure bot always pushes forward (positive speed) in this phase
-                botCurrentSpeed = Math.max(botCurrentSpeed, botSpeed * 0.8);
-                botCurrentSpeed = Math.min(botCurrentSpeed, botSpeed * 3.5);
+                // Ensure bot always pushes forward but cap the maximum speed
+                botCurrentSpeed = Math.max(botCurrentSpeed, botSpeed * 0.5);
+                botCurrentSpeed = Math.min(botCurrentSpeed, botSpeed * 4);
             }
         }
 
@@ -1480,11 +1469,12 @@
                 if (battlePosition >= 100) {
                     endGame('lose');
                 } else if (battlePosition > 85 && hasReachedAdaptivePhase) {
-                    // Player is losing ground in pushback phase - increase pressure
+                    // Player is losing ground in bot attack phase - increase pressure
                     intenseMoments++;
                     if (intenseMoments > 20) { // About 1 second at 50ms intervals
                         const gameInfo = document.getElementById('gameInfo');
-                        gameInfo.textContent = 'BOT IS WINNING! LAST CHANCE!';
+                        const botAttackSpeed = Math.max(baselineTapSpeed * 2, 8);
+                        gameInfo.textContent = `LOSING! NEED ${Math.ceil(botAttackSpeed + 2)} TPS!`;
                         gameInfo.classList.add('intense');
                     }
                 } else if (battlePosition > 75 && battlePosition <= 85 && hasReachedAdaptivePhase) {
