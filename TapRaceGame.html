@@ -876,13 +876,14 @@
         let botCurrentSpeed = 2.0;
         let gameStartTime = 0;
         
-        // Player tapping mechanics
+        // Player tapping mechanics - made more challenging
         let playerTapCount = 0;
         let playerTapWindow = 1000;
         let playerTapTimes = [];
         let currentPlayerTapSpeed = 0;
         let baselineTapSpeed = 0;
         let hasReachedAdaptivePhase = false;
+        let intenseMoments = 0; // Track how many times player struggled
         
         // User session data
         let userSession = {
@@ -1404,39 +1405,58 @@
                     baselineTapSpeed = Math.max(baselineTapSpeed, currentPlayerTapSpeed);
                 }
             } 
-            // Phase 2: Adaptive resistance (75% - 100% progress)
+            // Phase 2: Hard resistance (75% - 100% progress)
             else {
                 if (!hasReachedAdaptivePhase) {
                     hasReachedAdaptivePhase = true;
-                    console.log('🎯 Reached adaptive phase. Baseline tap speed:', baselineTapSpeed);
+                    console.log('🎯 Reached hard phase. Baseline tap speed:', baselineTapSpeed);
                 }
                 
                 const currentTapSpeed = calculatePlayerTapSpeed();
                 
-                // If player is tapping faster than their baseline, stop adapting
-                if (currentTapSpeed > baselineTapSpeed && baselineTapSpeed > 0) {
-                    // Player has increased their speed - let them win!
-                    botCurrentSpeed = botSpeed * 0.4; // Reduce resistance significantly
-                    document.getElementById('gameInfo').textContent = 'EXCELLENT! KEEP GOING!';
-                } else {
-                    // Bot matches player's current tap speed
+                // Calculate how much faster player is tapping compared to baseline
+                const tapSpeedIncrease = currentTapSpeed - baselineTapSpeed;
+                const tapSpeedMultiplier = Math.max(1, currentTapSpeed / Math.max(baselineTapSpeed, 1));
+                
+                // Player needs to tap significantly faster to make progress
+                if (tapSpeedIncrease > 3 && tapSpeedMultiplier > 1.5) {
+                    // Player is tapping much faster - allow some progress but with resistance
                     const playerPushRate = currentTapSpeed * 4; // 4 units per tap
                     const counterSpeed = playerPushRate / 20; // Divide by update frequency
                     
-                    // Add resistance so player needs to tap faster to progress
-                    botCurrentSpeed = counterSpeed + (botSpeed * 0.3);
+                    // Strong resistance - bot pushes back hard
+                    botCurrentSpeed = counterSpeed + (botSpeed * 1.2);
                     
-                    // Cap the bot speed
-                    botCurrentSpeed = Math.min(botCurrentSpeed, botSpeed * 3);
-                    botCurrentSpeed = Math.max(botCurrentSpeed, botSpeed * 0.5);
+                    document.getElementById('gameInfo').textContent = 'EXCELLENT! KEEP GOING!';
+                } 
+                else if (tapSpeedIncrease > 1 && tapSpeedMultiplier > 1.2) {
+                    // Player is tapping faster but not enough - minimal progress
+                    const playerPushRate = currentTapSpeed * 4;
+                    const counterSpeed = playerPushRate / 20;
                     
-                    // Update game info to guide player
-                    if (currentTapSpeed < 8) {
-                        document.getElementById('gameInfo').textContent = 'TAP FASTER! USE TWO FINGERS!';
-                    } else {
-                        document.getElementById('gameInfo').textContent = 'KEEP GOING! DOUBLE TAP!';
-                    }
+                    // Very strong resistance - almost holding position
+                    botCurrentSpeed = counterSpeed + (botSpeed * 1.8);
+                    
+                    document.getElementById('gameInfo').textContent = 'TAP MUCH FASTER! USE BOTH HANDS!';
+                } 
+                else {
+                    // Player is not tapping fast enough - bot pushes them back
+                    botCurrentSpeed = botSpeed * 2.5; // Strong pushback
+                    
+                    // Add intensity to the UI
+                    const gameInfo = document.getElementById('gameInfo');
+                    gameInfo.textContent = 'TAP FASTER OR LOSE!';
+                    gameInfo.classList.add('intense');
+                    
+                    // Remove intense class after a moment
+                    setTimeout(() => {
+                        gameInfo.classList.remove('intense');
+                    }, 500);
                 }
+                
+                // Cap the bot speed to prevent it from being impossibly hard
+                botCurrentSpeed = Math.min(botCurrentSpeed, botSpeed * 3.5);
+                botCurrentSpeed = Math.max(botCurrentSpeed, botSpeed * 0.8);
             }
         }
 
@@ -1453,8 +1473,17 @@
                 
                 updateBattleVisuals();
                 
+                // Check if bot is pushing player back significantly
                 if (battlePosition >= 100) {
                     endGame('lose');
+                } else if (battlePosition > 85 && hasReachedAdaptivePhase) {
+                    // Player is losing ground in hard phase - increase pressure
+                    intenseMoments++;
+                    if (intenseMoments > 20) { // About 1 second at 50ms intervals
+                        const gameInfo = document.getElementById('gameInfo');
+                        gameInfo.textContent = 'LAST CHANCE! TAP LIKE CRAZY!';
+                        gameInfo.classList.add('intense');
+                    }
                 }
             }, 50);
         }
@@ -1660,6 +1689,8 @@
             currentPlayerTapSpeed = 0;
             baselineTapSpeed = 0;
             hasReachedAdaptivePhase = false;
+            intenseMoments = 0;
+            intenseMoments = 0;
             
             if (botInterval) {
                 clearInterval(botInterval);
