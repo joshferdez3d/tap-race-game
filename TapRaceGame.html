@@ -654,7 +654,7 @@
 
         .congratulations-buttons {
             position: absolute;
-            bottom: 80px;
+            bottom: 70px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -766,9 +766,22 @@
             }
 
             .coupon-overlay {
-                bottom: 40px;
+                bottom: 150px;
                 width: 90%;
             }
+
+            .coupon-label {
+              color: #fff;
+              font-size: 1.2rem;
+              font-weight: 900;
+              text-transform: uppercase;
+              letter-spacing: 2px;
+              margin-bottom: 0.3rem;
+              text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+              /* optional: reuse your glow animation */
+              animation: couponGlow 2s ease-in-out infinite alternate;
+            }
+
         }
 
         /* Landscape mobile optimization */
@@ -905,6 +918,7 @@
         <div class="congratulations-content">
             <img src="assets/images/congratulations.png" alt="Congratulations" class="congratulations-image">
             <div class="coupon-overlay">
+              <div class="coupon-label">CODE</div>
                 <div class="coupon-code-display" id="finalCouponCode">
                     <span class="coupon-loading">Loading...</span>
                 </div>
