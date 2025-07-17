@@ -654,7 +654,7 @@
 
         .congratulations-buttons {
             position: absolute;
-            bottom: 150px;
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -670,7 +670,7 @@
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
-            border-radius: 15px;
+            border-radius: 25px;
             cursor: pointer;
             transition: all 0.3s;
             box-shadow: 0 0 15px rgba(207, 0, 0, 0.4);
@@ -931,7 +931,7 @@
         // Store authentication token and customer data
         let authToken = '';
         let customerId = '';
-        let outletQR = 'QRCODE1'; // You can make this configurable
+        let outletQR = ''; // Will be extracted from URL parameters
 
         // Global variables
         let currentScreen = 'loginScreen';
@@ -962,6 +962,39 @@
             hasWonBefore: false,
             couponCode: ''
         };
+
+        // ============================
+        // URL PARAMETER EXTRACTION
+        // ============================
+
+        // Extract QR code from URL parameters
+        function extractQRCodeFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const qrParam = urlParams.get('qr') || urlParams.get('outlet') || urlParams.get('code') || urlParams.get('retailer');
+            
+            if (qrParam) {
+                outletQR = qrParam;
+                console.log('🏪 QR Code extracted from URL:', outletQR);
+                return qrParam;
+            } else {
+                console.warn('⚠️ No QR code found in URL parameters. Using fallback.');
+                outletQR = 'DEFAULT_QR'; // Fallback value
+                return outletQR;
+            }
+        }
+
+        // Initialize QR code extraction on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            extractQRCodeFromURL();
+            console.log('📍 Current outlet QR:', outletQR);
+        });
+
+        // Also extract on window load as backup
+        window.addEventListener('load', function() {
+            if (!outletQR || outletQR === '') {
+                extractQRCodeFromURL();
+            }
+        });
 
         // ============================
         // API FUNCTIONS
@@ -1061,6 +1094,16 @@
             if (!authToken || !customerId) {
                 console.warn('⚠️ Missing authentication data');
                 return { success: false, message: 'Authentication required' };
+            }
+
+            if (!outletQR || outletQR === '') {
+                console.warn('⚠️ Missing outlet QR code');
+                // Try to extract QR code again as fallback
+                extractQRCodeFromURL();
+                if (!outletQR || outletQR === '') {
+                    console.error('❌ Still no QR code available. Using emergency fallback.');
+                    outletQR = 'EMERGENCY_QR';
+                }
             }
             
             try {
@@ -1867,7 +1910,9 @@
             setOutletQR,
             setAPIBaseURL,
             getAuthToken: () => authToken,
-            getCustomerId: () => customerId
+            getCustomerId: () => customerId,
+            getCurrentOutletQR: () => outletQR,
+            extractQRFromURL: extractQRCodeFromURL
         };
 
         // Prevent zoom and handle mobile quirks
