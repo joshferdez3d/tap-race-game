@@ -424,9 +424,34 @@
             pointer-events: none;
         }
 
+        .tap-here-text {
+            position: absolute;
+            top: 75%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(2.5rem, 8vw, 3.5rem);
+            font-weight: 900;
+            color: #cf0000;
+            text-shadow: 
+                0 0 20px rgba(207, 0, 0, 0.8),
+                0 0 40px rgba(207, 0, 0, 0.4),
+                2px 2px 8px rgba(0,0,0,0.8);
+            z-index: 20;
+            animation: tapHerePulse 1s ease-in-out;
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
         @keyframes countdownPulse {
             0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
             50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        @keyframes tapHerePulse {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         }
 
@@ -631,7 +656,19 @@
             transform: translateX(-50%);
             width: 80%;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .coupon-code-label {
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            margin-bottom: 5px;
         }
 
         .coupon-code-display {
@@ -743,6 +780,11 @@
                 font-size: 1.2rem; 
             }
 
+            .coupon-code-label {
+                font-size: 0.9rem;
+                letter-spacing: 1px;
+            }
+
             .coupon-code-display {
                 font-size: 1.2rem;
                 letter-spacing: 2px;
@@ -769,19 +811,6 @@
                 bottom: 150px;
                 width: 90%;
             }
-
-            .coupon-label {
-              color: #fff;
-              font-size: 1.2rem;
-              font-weight: 900;
-              text-transform: uppercase;
-              letter-spacing: 2px;
-              margin-bottom: 0.3rem;
-              text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-              /* optional: reuse your glow animation */
-              animation: couponGlow 2s ease-in-out infinite alternate;
-            }
-
         }
 
         /* Landscape mobile optimization */
@@ -887,6 +916,7 @@
         </div>
         
         <div class="countdown" id="countdown"></div>
+        <div class="tap-here-text" id="tapHereText" style="display: none;">Tap Here</div>
     </div>
 
     <!-- Game Result Modal -->
@@ -918,7 +948,7 @@
         <div class="congratulations-content">
             <img src="assets/images/congratulations.png" alt="Congratulations" class="congratulations-image">
             <div class="coupon-overlay">
-              <div class="coupon-label">CODE</div>
+                <div class="coupon-code-label">CODE</div>
                 <div class="coupon-code-display" id="finalCouponCode">
                     <span class="coupon-loading">Loading...</span>
                 </div>
@@ -1460,6 +1490,7 @@
             if (playerFill) playerFill.style.height = '50%';
             if (opponentFill) opponentFill.style.height = '50%';
             if (countdown) countdown.style.display = 'none';
+            if (document.getElementById('tapHereText')) document.getElementById('tapHereText').style.display = 'none';
             if (topZoneImage) {
                 topZoneImage.classList.remove('hidden');
                 topZoneImage.src = 'assets/images/bot1.png';
@@ -1539,10 +1570,12 @@
 
         function startCountdown() {
             const countdown = document.getElementById('countdown');
+            const tapHereText = document.getElementById('tapHereText');
             let count = 3;
             
             countdown.textContent = count;
             countdown.style.display = 'block';
+            tapHereText.style.display = 'none';
             
             const countInterval = setInterval(() => {
                 count--;
@@ -1550,16 +1583,20 @@
                     countdown.textContent = count;
                     countdown.style.animation = 'countdownPulse 1s ease-in-out';
                 } else if (count === 0) {
-                    countdown.textContent = 'TAP!';
-                    countdown.style.animation = 'countdownPulse 1s ease-in-out';
+                    // Hide the countdown and show "Tap Here" in player zone
+                    countdown.style.display = 'none';
+                    tapHereText.style.display = 'block';
+                    tapHereText.style.animation = 'tapHerePulse 1s ease-in-out';
                 } else {
                     countdown.style.display = 'none';
+                    tapHereText.style.display = 'none';
                     startBotGame();
                     clearInterval(countInterval);
                 }
                 
                 setTimeout(() => {
                     countdown.style.animation = '';
+                    tapHereText.style.animation = '';
                 }, 1000);
             }, 1000);
         }
@@ -1903,6 +1940,7 @@
             
             updateBattleVisuals();
             document.getElementById('countdown').style.display = 'none';
+            document.getElementById('tapHereText').style.display = 'none';
             document.getElementById('gameInfo').textContent = 'Get Ready to Battle!';
             
             showZoneImages();
