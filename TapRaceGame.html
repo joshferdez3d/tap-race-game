@@ -1152,6 +1152,7 @@
                     method: 'POST',
                     headers: API_CONFIG.headers,
                     body: JSON.stringify({
+                        name: userSession.name,
                         mobile_no: phone,
                         otp: enteredOTP
                     })
