@@ -1046,8 +1046,8 @@
         let gameStarted = false;
         let battlePosition = 0;
         let botInterval;
-        let botSpeed = 2.0;
-        let botCurrentSpeed = 2.0;
+        let botSpeed = 1.6;           // was 2.0
+        let botCurrentSpeed = 1.6;    // was 2.0
         let gameStartTime = 0;
         
         // Player tapping mechanics - made more challenging
@@ -1060,6 +1060,17 @@
         let intenseMoments = 0; // Track how many times player struggled
         let botAggressiveModeActivated = false; // Track if bot has entered aggressive mode
         
+        const EASY = {
+          aggressiveThresholdPct: 0.80, // was 0.60; bot waits longer to go aggressive
+          botAttackBaselineMult: 1.2,   // was 1.5; bot targets closer to player baseline
+          botAttackMinTPS: 4,           // was 6; lower minimum bot “taps/sec”
+          botPushUnitsPerTap: 2.5,      // was 3.5; bot’s push per tap is lower
+          playerPushUnitsPerTap: 5.5,   // was 4; your tap is stronger
+          pushbackMultiplier: 1.0,      // was 1.2; bot’s comeback is gentler
+          minBotSpeedMult: 0.5,         // was 0.7; lower floor on bot speed
+          maxBotSpeedMult: 2.5          // was 3.5; cap bot spikes
+        };
+
         // User session data
         let userSession = {
             name: '',
@@ -1765,68 +1776,62 @@
         }
 
         function calculateBotSpeed() {
-            const playerProgress = Math.abs(battlePosition);
-            const progressPercentage = playerProgress / 100;
-            
-            // Check if player has reached 60% for the first time
-            if (progressPercentage >= 0.60 && !botAggressiveModeActivated) {
-                botAggressiveModeActivated = true;
-                hasReachedAdaptivePhase = true;
-                console.log('🎯 Bot aggressive mode permanently activated! Baseline speed:', baselineTapSpeed);
+          const playerProgress = Math.abs(battlePosition);
+          const progressPercentage = playerProgress / 100;
+
+          // Lock-in aggressive phase only after higher threshold
+          if (progressPercentage >= EASY.aggressiveThresholdPct && !botAggressiveModeActivated) {
+            botAggressiveModeActivated = true;
+            hasReachedAdaptivePhase = true;
+            // Keep the best baseline the player showed pre-aggression
+            console.log('🎯 Bot aggressive mode activated later. Baseline:', baselineTapSpeed);
+          }
+
+          if (progressPercentage < EASY.aggressiveThresholdPct && !botAggressiveModeActivated) {
+            // Phase 1: easy cruise so players make clear progress
+            botCurrentSpeed = botSpeed * 0.5; // even gentler than before
+            if (currentPlayerTapSpeed > 0) {
+              baselineTapSpeed = Math.max(baselineTapSpeed, currentPlayerTapSpeed);
             }
-            
-            // Phase 1: Easy gameplay (0% - 60% progress) - ONLY if aggressive mode not activated
-            if (progressPercentage < 0.60 && !botAggressiveModeActivated) {
-                // Bot plays at easy difficulty - allows steady progress
-                botCurrentSpeed = botSpeed * 0.6;
-                
-                // Track baseline tap speed during easy phase
-                if (currentPlayerTapSpeed > 0) {
-                    baselineTapSpeed = Math.max(baselineTapSpeed, currentPlayerTapSpeed);
-                }
-            } 
-            // Phase 2: Bot attacks moderately - PERMANENT once activated (regardless of position)
-            else {
-                const currentTapSpeed = calculatePlayerTapSpeed();
-                
-                // Bot attacks at 1.5x the player's baseline tapping speed (reduced from 2x)
-                const botAttackSpeed = Math.max(baselineTapSpeed * 1.5, 6); // Reduced minimum from 8 to 6
-                
-                // Convert bot attack speed to movement units (less aggressive)
-                const botPushRate = botAttackSpeed * 3.5; // Reduced from 5 to 3.5 units per "tap"
-                const botPushPerUpdate = botPushRate / 20; // Divide by update frequency
-                
-                // Player's current push rate
-                const playerPushRate = currentTapSpeed * 4; // 4 units per tap
-                const playerPushPerUpdate = playerPushRate / 20;
-                
-                // Net battle: more balanced between bot and player
-                const netPlayerAdvantage = playerPushPerUpdate - botPushPerUpdate;
-                
-                if (netPlayerAdvantage > 0) {
-                    // Player is tapping faster than bot's attack - player can advance
-                    botCurrentSpeed = botPushPerUpdate - (netPlayerAdvantage * 0.6); // Increased player advantage from 0.3 to 0.6
-                    document.getElementById('gameInfo').textContent = 'OVERPOWERING THE BOT! KEEP GOING!';
-                } else {
-                    // Bot is attacking faster than player - bot pushes back
-                    const pushbackMultiplier = 1.2; // Reduced from 1.5 to 1.2
-                    botCurrentSpeed = botPushPerUpdate + (Math.abs(netPlayerAdvantage) * pushbackMultiplier);
-                    
-                    const gameInfo = document.getElementById('gameInfo');
-                    gameInfo.textContent = `BOT PUSHING BACK! NEED ${Math.ceil(botAttackSpeed)} TPS!`;
-                    gameInfo.classList.add('intense');
-                    
-                    // Remove intense class after a moment
-                    setTimeout(() => {
-                        gameInfo.classList.remove('intense');
-                    }, 500);
-                }
-                
-                // Ensure bot pushes forward but with lower intensity
-                botCurrentSpeed = Math.max(botCurrentSpeed, botSpeed * 0.7); // Reduced minimum from 1.0 to 0.7
-                botCurrentSpeed = Math.min(botCurrentSpeed, botSpeed * 3.5); // Reduced maximum from 5 to 3.5
-            }
+            return;
+          }
+
+          // Phase 2: softened aggression
+          const currentTapSpeed = calculatePlayerTapSpeed();
+
+          // Bot targets ~1.2x of player's best early T/S, with a lower floor
+          const botAttackSpeed = Math.max(baselineTapSpeed * EASY.botAttackBaselineMult, EASY.botAttackMinTPS);
+
+          // Convert “taps/sec” into movement units (bot weaker)
+          const botPushRate = botAttackSpeed * EASY.botPushUnitsPerTap;
+          const botPushPerUpdate = botPushRate / 20; // 20 updates/sec (50ms tick)
+
+          // Player conversion (stronger taps)
+          const playerPushRate = currentTapSpeed * EASY.playerPushUnitsPerTap;
+          const playerPushPerUpdate = playerPushRate / 20;
+
+          const netPlayerAdvantage = playerPushPerUpdate - botPushPerUpdate;
+
+          if (netPlayerAdvantage > 0) {
+            // Player winning exchanges more decisively
+            botCurrentSpeed = botPushPerUpdate - (netPlayerAdvantage * 0.8); // was 0.6 → even more in player’s favor
+            document.getElementById('gameInfo').textContent = 'OVERPOWERING THE BOT! KEEP GOING!';
+          } else {
+            // Bot pushback is milder
+            botCurrentSpeed = botPushPerUpdate + (Math.abs(netPlayerAdvantage) * EASY.pushbackMultiplier);
+
+            const gameInfo = document.getElementById('gameInfo');
+            const needTPS = Math.ceil(botAttackSpeed - 1); // show a slightly easier target
+            gameInfo.textContent = `BOT PUSHING BACK! AIM ${needTPS} TPS`;
+            gameInfo.classList.add('intense');
+            setTimeout(() => gameInfo.classList.remove('intense'), 500);
+          }
+
+          // Clamp bot speed to a friendlier range
+          botCurrentSpeed = Math.max(botCurrentSpeed, botSpeed * EASY.minBotSpeedMult);
+          botCurrentSpeed = Math.min(botCurrentSpeed, botSpeed * EASY.maxBotSpeedMult);
         }
+
 
         function startBot() {
             botInterval = setInterval(() => {
@@ -1885,7 +1890,7 @@
             playerTapCount++;
             
             hideZoneImages();
-            battlePosition -= 4;
+            battlePosition -= EASY.playerPushUnitsPerTap;
             updateBattleVisuals();
             
             // Update player tap speed
